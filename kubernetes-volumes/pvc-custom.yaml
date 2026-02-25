@@ -1,0 +1,15 @@
+# Bonus: PVC using custom StorageClass
+# Note: To use this, delete the existing homework-pvc first:
+# kubectl delete pvc homework-pvc -n homework
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: homework-pvc
+  namespace: homework
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: homework-storage
