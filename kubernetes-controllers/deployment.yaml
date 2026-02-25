@@ -41,15 +41,15 @@ spec:
       - name: nginx
         image: nginx:1.25
         ports:
-        - containerPort: 8000
+        - containerPort: 80
         volumeMounts:
         - name: homework
-          mountPath: /homework
+          mountPath: /usr/share/nginx/html/homework
         readinessProbe:
           exec:
             command:
             - cat
-            - /homework/index.html
+            - /usr/share/nginx/html/homework/index.html
           initialDelaySeconds: 5
           periodSeconds: 10
       volumes:
