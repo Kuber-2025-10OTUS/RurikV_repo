@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-server
+  namespace: homework
+  annotations:
+    # Rewrite /homepage to /homework/index.html
+    nginx.ingress.kubernetes.io/rewrite-target: /homework/index.html
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: homework.otus
+    http:
+      paths:
+      # Main path: /index.html -> /homework/index.html
+      - path: /index.html
+        pathType: Exact
+        backend:
+          service:
+            name: web-server
+            port:
+              number: 80
+      # Bonus: /homepage -> /homework/index.html
+      - path: /homepage
+        pathType: Exact
+        backend:
+          service:
+            name: web-server
+            port:
+              number: 80
