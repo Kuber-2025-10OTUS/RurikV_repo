@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homework-config
+  namespace: homework
+data:
+  file: |
+    # Homework Configuration File
+    setting1=value1
+    setting2=value2
+    setting3=value3
+  database.conf: |
+    host=localhost
+    port=5432
+    name=homework_db
+  app.properties: |
+    app.name=homework-app
+    app.version=1.0.0
+    debug=false
