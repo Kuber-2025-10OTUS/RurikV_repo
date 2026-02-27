@@ -1,0 +1,56 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your web-server application has been deployed.
+
+================================================================================
+                           ACCESS INFORMATION
+================================================================================
+
+{{- if .Values.ingress.enabled }}
+
+The application is accessible via Ingress:
+
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  URL: http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+
+If using kind/minikube, you may need to:
+  1. Add the host to /etc/hosts:
+     127.0.0.1 {{ (first .Values.ingress.hosts).host }}
+
+  2. Port-forward to the ingress controller:
+     kubectl port-forward svc/ingress-nginx-controller -n ingress-nginx 8080:80
+
+  3. Access via curl:
+     curl -H "Host: {{ (first .Values.ingress.hosts).host }}" http://localhost:8080/index.html
+
+{{- else }}
+
+The application is accessible via port-forward:
+
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "web-server.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:{{ .Values.service.port }}
+
+Then visit: http://localhost:8080/homework/index.html
+
+{{- end }}
+
+================================================================================
+                           AVAILABLE ENDPOINTS
+================================================================================
+
+  /homework/index.html  - Main homework page
+  /homework/metrics.html - Cluster metrics (if enabled)
+  /conf/file            - ConfigMap content (if enabled)
+
+================================================================================
+                           CONFIGURATION
+================================================================================
+
+  Replicas: {{ .Values.replicaCount }}
+  Image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+  Probes enabled: Readiness={{ .Values.probes.readiness.enabled }}, Liveness={{ .Values.probes.liveness.enabled }}
+
+For more information, check the chart README or values.yaml.

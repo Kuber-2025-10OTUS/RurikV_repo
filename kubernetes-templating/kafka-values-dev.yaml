@@ -1,0 +1,65 @@
+# Kafka values for DEV environment
+# - 1 broker
+# - Latest Kafka version
+# - PLAINTEXT protocol, no auth
+
+# Disable auto-topic creation
+autoCreateTopicsEnable: true
+
+# Latest Kafka version (using default)
+image:
+  repository: bitnami/kafka
+  tag: ""  # Empty means latest
+  pullPolicy: IfNotPresent
+
+# Number of Kafka brokers
+replicaCount: 1
+
+# Listener configuration - PLAINTEXT
+listeners:
+  client:
+    protocol: PLAINTEXT
+  controller:
+    protocol: PLAINTEXT
+  interbroker:
+    protocol: PLAINTEXT
+  external:
+    protocol: PLAINTEXT
+
+# SASL authentication - disabled
+sasl:
+  enabled: false
+
+# Zookeeper configuration (minimal for dev)
+zookeeper:
+  enabled: true
+  replicaCount: 1
+
+# KRaft mode (disabled, using Zookeeper)
+kraft:
+  enabled: false
+
+# Persistence (smaller for dev)
+persistence:
+  enabled: true
+  size: 1Gi
+
+# Resources (minimal for dev)
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# JMX metrics
+jmx:
+  enabled: false
+
+# Metrics exporter
+metrics:
+  kafka:
+    enabled: false
+  jmx:
+    enabled: false

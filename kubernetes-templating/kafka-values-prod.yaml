@@ -1,0 +1,76 @@
+# Kafka values for PROD environment
+# - 5 brokers
+# - Kafka version 3.5.2
+# - SASL_PLAINTEXT protocol
+
+# Disable auto-topic creation
+autoCreateTopicsEnable: false
+
+# Kafka version
+image:
+  repository: bitnami/kafka
+  tag: 3.5.2-debian-11-r0
+  pullPolicy: IfNotPresent
+
+# Number of Kafka brokers
+replicaCount: 5
+
+# Listener configuration - SASL_PLAINTEXT
+listeners:
+  client:
+    protocol: SASL_PLAINTEXT
+  controller:
+    protocol: SASL_PLAINTEXT
+  interbroker:
+    protocol: SASL_PLAINTEXT
+  external:
+    protocol: SASL_PLAINTEXT
+
+# SASL authentication
+sasl:
+  enabled: true
+  controller:
+    user: controller_user
+    password: controller_password
+  interbroker:
+    user: interbroker_user
+    password: interbroker_password
+  client:
+    users:
+      - app_user
+    passwords:
+      - app_password
+
+# Zookeeper configuration
+zookeeper:
+  enabled: true
+  replicaCount: 3
+
+# KRaft mode (disabled, using Zookeeper)
+kraft:
+  enabled: false
+
+# Persistence
+persistence:
+  enabled: true
+  size: 8Gi
+
+# Resources
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+# JMX metrics
+jmx:
+  enabled: false
+
+# Metrics exporter
+metrics:
+  kafka:
+    enabled: false
+  jmx:
+    enabled: false

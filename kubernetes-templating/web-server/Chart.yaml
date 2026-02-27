@@ -1,0 +1,17 @@
+apiVersion: v2
+name: web-server
+description: A Helm chart for the Kubernetes Homework web application
+
+type: application
+
+version: 0.1.0
+
+appVersion: "1.0.0"
+
+# Service dependency - Redis
+dependencies:
+  - name: redis
+    version: "18.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    enabled: false
+    condition: redis.enabled

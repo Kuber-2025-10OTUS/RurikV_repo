@@ -1,0 +1,31 @@
+# Helmfile for Kafka deployments
+# Task 2: Install Kafka from bitnami helm chart
+
+repositories:
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
+
+releases:
+  # Kafka for PROD environment
+  # - 5 brokers
+  # - Kafka version 3.5.2
+  # - SASL_PLAINTEXT protocol for client and inter-broker
+  - name: kafka-prod
+    namespace: prod
+    chart: bitnami/kafka
+    version: "29.x.x"
+    createNamespace: true
+    values:
+      - kafka-values-prod.yaml
+
+  # Kafka for DEV environment
+  # - 1 broker
+  # - Latest Kafka version
+  # - PLAINTEXT protocol, no auth
+  - name: kafka-dev
+    namespace: dev
+    chart: bitnami/kafka
+    version: "29.x.x"
+    createNamespace: true
+    values:
+      - kafka-values-dev.yaml
