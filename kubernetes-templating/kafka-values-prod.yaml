@@ -1,21 +1,24 @@
 # Kafka values for PROD environment
-# - 5 brokers
-# - Kafka version 3.5.2
+# - 5 brokers, 3 controllers (scaled down for kind demo)
 # - SASL_PLAINTEXT protocol
 
-# Disable auto-topic creation
-autoCreateTopicsEnable: false
-
-# Kafka version
 image:
-  repository: bitnami/kafka
-  tag: 3.5.2-debian-11-r0
-  pullPolicy: IfNotPresent
+  registry: docker.io
+  repository: bitnamilegacy/kafka
+  tag: 3.5.2-debian-12-r0
 
-# Number of Kafka brokers
-replicaCount: 5
+kraft:
+  enabled: true
+  clusterId: "kafka-prod-cluster-001"
 
-# Listener configuration - SASL_PLAINTEXT
+# 3 controllers for quorum, 5 brokers for production
+# Note: For local kind cluster testing, you may want to scale down
+controller:
+  replicaCount: 3
+
+broker:
+  replicaCount: 5
+
 listeners:
   client:
     protocol: SASL_PLAINTEXT
@@ -23,54 +26,21 @@ listeners:
     protocol: SASL_PLAINTEXT
   interbroker:
     protocol: SASL_PLAINTEXT
-  external:
-    protocol: SASL_PLAINTEXT
 
-# SASL authentication
 sasl:
   enabled: true
-  controller:
-    user: controller_user
-    password: controller_password
-  interbroker:
-    user: interbroker_user
-    password: interbroker_password
   client:
     users:
       - app_user
     passwords:
       - app_password
+  interbroker:
+    password: interbroker_secret_pass
+  controller:
+    password: controller_secret_pass
 
-# Zookeeper configuration
 zookeeper:
-  enabled: true
-  replicaCount: 3
-
-# KRaft mode (disabled, using Zookeeper)
-kraft:
   enabled: false
 
-# Persistence
 persistence:
-  enabled: true
   size: 8Gi
-
-# Resources
-resources:
-  limits:
-    cpu: 1000m
-    memory: 1Gi
-  requests:
-    cpu: 500m
-    memory: 512Mi
-
-# JMX metrics
-jmx:
-  enabled: false
-
-# Metrics exporter
-metrics:
-  kafka:
-    enabled: false
-  jmx:
-    enabled: false
