@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "web-server.fullname" . }}
+  labels:
+    {{- include "web-server.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "web-server.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "web-server.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "web-server.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: init-index
+          image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag }}"
+          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          command: ['sh', '-c', '{{ .Values.initContainer.command }}']
+          volumeMounts:
+            - name: homework
+              mountPath: /homework
+        {{- if .Values.metrics.enabled }}
+        - name: fetch-metrics
+          image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag }}"
+          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          command: ['sh', '-c']
+          args:
+            - |
+              echo "<!DOCTYPE html><html><head><title>Metrics</title></head><body><h1>Cluster Metrics</h1><pre>" > /homework/metrics.html
+              wget -q -O - --no-check-certificate \
+                --header="Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" \
+                https://kubernetes.default.svc/metrics 2>/dev/null >> /homework/metrics.html || \
+              echo "Metrics not available (metrics-server may not be installed)" >> /homework/metrics.html
+              echo "</pre></body></html>" >> /homework/metrics.html
+          volumeMounts:
+            - name: homework
+              mountPath: /homework
+        {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          {{- if .Values.probes.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.liveness.httpGet.path }}
+              port: {{ .Values.probes.liveness.httpGet.port }}
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+          {{- end }}
+          {{- if .Values.probes.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readiness.httpGet.path }}
+              port: {{ .Values.probes.readiness.httpGet.port }}
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: homework
+              mountPath: /usr/share/nginx/html/homework
+            {{- if .Values.configMap.enabled }}
+            - name: config
+              mountPath: /usr/share/nginx/html/conf
+              readOnly: true
+            {{- end }}
+            {{- with .Values.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: homework
+          emptyDir: {}
+        {{- if .Values.configMap.enabled }}
+        - name: config
+          configMap:
+            name: {{ include "web-server.fullname" . }}-config
+        {{- end }}
+        {{- with .Values.volumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
