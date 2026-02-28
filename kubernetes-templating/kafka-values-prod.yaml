@@ -1,11 +1,12 @@
 # Kafka values for PROD environment
 # - 5 brokers, 3 controllers (scaled down for kind demo)
 # - SASL_PLAINTEXT protocol
+# - Latest Kafka version (tag not specified = latest)
 
 image:
   registry: docker.io
   repository: bitnamilegacy/kafka
-  tag: 3.5.2-debian-12-r9
+  # tag not specified to use the latest available version
 
 kraft:
   enabled: true
