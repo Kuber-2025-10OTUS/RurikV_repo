@@ -10,19 +10,23 @@ kind: ClusterRole
 metadata:
   name: mysql-operator
 rules:
-  # Custom Resource Definition - manage CRD itself
-  - apiGroups: ["apiextensions.k8s.io"]
-    resources:
-      - customresourcedefinitions
-    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-
-  # MySQL Custom Resource - full access to our CRD
+  # MySQL Custom Resource - watch, update status, manage finalizers (not create/delete CRs)
   - apiGroups: ["otus.homework"]
     resources:
       - mysqls
+    verbs: ["get", "list", "watch", "update", "patch"]
+
+  # MySQL status subresource - for reporting reconciliation status
+  - apiGroups: ["otus.homework"]
+    resources:
       - mysqls/status
+    verbs: ["update", "patch"]
+
+  # MySQL finalizers subresource - for cleanup before deletion
+  - apiGroups: ["otus.homework"]
+    resources:
       - mysqls/finalizers
-    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+    verbs: ["update", "patch"]
 
   # Services - create and delete
   - apiGroups: [""]
@@ -42,23 +46,24 @@ rules:
       - persistentvolumeclaims
     verbs: ["get", "list", "watch", "create", "delete"]
 
-  # Deployments - needed to create MySQL deployment
+  # Deployments - required to deploy MySQL instances
   - apiGroups: ["apps"]
     resources:
       - deployments
-    verbs: ["get", "list", "watch", "create", "delete", "update"]
+      - deployments/status
+    verbs: ["get", "list", "watch", "create", "update", "delete"]
 
-  # Pods - read-only for status checks
+  # Pods - read-only for health checks
   - apiGroups: [""]
     resources:
       - pods
     verbs: ["get", "list", "watch"]
 
-  # Events - create for logging
+  # Events - create for operator logging
   - apiGroups: [""]
     resources:
       - events
-    verbs: ["create"]
+    verbs: ["create", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
