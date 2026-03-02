@@ -1,0 +1,47 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: mysqls.otus.homework
+spec:
+  scope: Namespaced
+  group: otus.homework
+  names:
+    kind: MySQL
+    plural: mysqls
+    singular: mysql
+    shortNames:
+      - mysql
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - spec
+          properties:
+            spec:
+              type: object
+              required:
+                - image
+                - database
+                - password
+                - storage_size
+              properties:
+                image:
+                  type: string
+                  description: "Docker image for MySQL deployment"
+                  minLength: 1
+                database:
+                  type: string
+                  description: "Name of the database to create"
+                  minLength: 1
+                password:
+                  type: string
+                  description: "Password for MySQL root user"
+                  minLength: 1
+                storage_size:
+                  type: string
+                  description: "Size of persistent storage (e.g., 1Gi, 5Gi)"
+                  pattern: "^[0-9]+(Gi|Mi|Ki|G|M|K)$"
