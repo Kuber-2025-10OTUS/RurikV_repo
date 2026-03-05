@@ -1,0 +1,50 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: mysqls.otus.homework
+  labels:
+    app: mysql-operator
+spec:
+  group: otus.homework
+  names:
+    kind: MySQL
+    listKind: MySQLList
+    plural: mysqls
+    singular: mysql
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                image:
+                  type: string
+                  default: "mysql:8.0"
+                  description: "MySQL container image"
+                database:
+                  type: string
+                  default: "default_db"
+                  description: "Database name to create"
+                password:
+                  type: string
+                  default: "default_password"
+                  description: "MySQL root password"
+                storage_size:
+                  type: string
+                  default: "1Gi"
+                  description: "Storage size for PV/PVC"
+              required:
+                - image
+                - database
+                - password
+            status:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+      subresources:
+        status: {}

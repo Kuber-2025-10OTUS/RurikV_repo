@@ -1,0 +1,70 @@
+# RBAC for MySQL Operator
+# Minimal permissions following principle of least privilege
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mysql-operator
+  namespace: default
+  labels:
+    app: mysql-operator
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: mysql-operator
+  labels:
+    app: mysql-operator
+rules:
+  # MySQL Custom Resource - manage instances
+  - apiGroups: ["otus.homework"]
+    resources: ["mysqls", "mysqls/status", "mysqls/finalizers"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+
+  # Services - create/delete for MySQL instances
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+
+  # PersistentVolumes - create/delete for MySQL storage
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+
+  # PersistentVolumeClaims - create/delete for MySQL storage
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+
+  # Deployments - manage MySQL deployments
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/status"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Pods - read-only for health checks
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+
+  # Events - create for logging
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: mysql-operator
+  labels:
+    app: mysql-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: mysql-operator
+subjects:
+  - kind: ServiceAccount
+    name: mysql-operator
+    namespace: default

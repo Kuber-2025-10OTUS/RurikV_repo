@@ -1,0 +1,36 @@
+# Kafka values for DEV environment
+# - 1 combined controller+broker
+# - PLAINTEXT protocol, no auth
+# - Latest Kafka version (tag not specified = latest)
+
+image:
+  registry: docker.io
+  repository: bitnamilegacy/kafka
+  # tag not specified to use the latest available version
+
+kraft:
+  enabled: true
+  clusterId: "kafka-dev-cluster-001"
+
+controller:
+  replicaCount: 1
+
+broker:
+  replicaCount: 0
+
+listeners:
+  client:
+    protocol: PLAINTEXT
+  controller:
+    protocol: PLAINTEXT
+  interbroker:
+    protocol: PLAINTEXT
+
+sasl:
+  enabled: false
+
+zookeeper:
+  enabled: false
+
+persistence:
+  size: 1Gi
