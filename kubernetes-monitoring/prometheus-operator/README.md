@@ -83,7 +83,8 @@ To access Grafana dashboard:
 kubectl port-forward svc/prometheus-operator-grafana -n monitoring 3000:80
 
 # Open in browser: http://localhost:3000
-# Default credentials: admin / prom-operator
+# Get credentials (username: admin):
+kubectl get secret prometheus-operator-grafana -n monitoring -o jsonpath='{.data.admin-password}' | base64 -d && echo
 ```
 
 ## Uninstall

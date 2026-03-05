@@ -221,7 +221,8 @@ kubectl describe servicemonitor nginx-with-exporter -n monitoring
 kubectl port-forward svc/prometheus-operator-grafana -n monitoring 3000:80
 
 # Open Grafana at http://localhost:3000
-# Default credentials: admin / prom-operator
+# Get credentials (username: admin):
+kubectl get secret prometheus-operator-grafana -n monitoring -o jsonpath='{.data.admin-password}' | base64 -d && echo
 ```
 
 You can import nginx dashboards or create your own to visualize metrics:
