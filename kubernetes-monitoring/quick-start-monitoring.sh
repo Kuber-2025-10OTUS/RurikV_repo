@@ -61,14 +61,21 @@ read -p "Do you want to build the custom nginx image? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     if command -v docker &> /dev/null; then
-        echo "Building custom nginx image..."
+        # Check if using colima
+        if command -v colima &> /dev/null && colima status &> /dev/null; then
+            print_success "Detected colima is running"
+            echo "Building custom nginx image using colima..."
+        else
+            echo "Building custom nginx image..."
+        fi
+
         cd nginx-custom
         docker build -t custom-nginx:latest .
         cd ..
         print_success "Custom nginx image built successfully"
 
-        # Check if using minikube
-        if command -v minikube &> /dev/null; then
+        # Check if using minikube (alternative to colima)
+        if command -v minikube &> /dev/null && minikube status &> /dev/null; then
             read -p "Are you using minikube? Load image to minikube? (y/n) " -n 1 -r
             echo
             if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -123,7 +130,7 @@ echo "=== Step 4: Verification ==="
 read -p "Run verification script? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    ./verify.sh
+    ./verify-monitoring.sh
 fi
 
 echo ""

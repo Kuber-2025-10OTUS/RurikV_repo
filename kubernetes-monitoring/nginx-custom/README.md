@@ -11,6 +11,36 @@ This custom nginx image is configured to expose metrics via the `stub_status` mo
 
 ## Building the Image
 
+### Using Colima (Recommended for macOS)
+
+If you're using colima, ensure it's running:
+
+```bash
+# Start colima if not running
+colima start
+
+# Build the image
+cd nginx-custom
+docker build -t custom-nginx:latest .
+```
+
+**Note:** With colima, the image is automatically available to your Kubernetes cluster if you're using the colima Kubernetes runtime.
+
+### Using Minikube
+
+If you're using minikube:
+
+```bash
+# Load minikube docker environment
+eval $(minikube docker-env)
+
+# Build the image
+cd nginx-custom
+docker build -t custom-nginx:latest .
+```
+
+### Using Docker Desktop or Other Runtimes
+
 ```bash
 cd nginx-custom
 docker build -t custom-nginx:latest .

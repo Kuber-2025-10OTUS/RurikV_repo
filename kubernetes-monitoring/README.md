@@ -72,33 +72,57 @@ The nginx-prometheus-exporter collects the following metrics:
 
 ## Prerequisites
 
-- Kubernetes cluster (minikube, kind, or cloud-based)
+- Kubernetes cluster (colima, minikube, kind, or cloud-based)
 - kubectl configured to access your cluster
 - Helm 3.x installed
 - Docker (for building custom nginx image)
+  - **Colima** (recommended for macOS) - provides Docker runtime and optional Kubernetes
+  - Or Docker Desktop / minikube / other Docker runtime
 
 ## Installation
 
 ### Step 1: Build Custom Nginx Image
 
+#### Using Colima (Recommended for macOS)
+
+If you're using colima, ensure it's running:
+
 ```bash
+# Start colima if not running
+colima start
+
+# Build the custom nginx image
 cd nginx-custom
 docker build -t custom-nginx:latest .
 cd ..
 ```
 
-**Note:** If using minikube, you can load the image directly:
+**Note:** With colima, the image is automatically available to your Kubernetes cluster if you're using the colima Kubernetes runtime.
+
+#### Using Minikube
+
+If you're using minikube:
+
 ```bash
+# Load minikube docker environment
 eval $(minikube docker-env)
+
+# Build the image
 cd nginx-custom
 docker build -t custom-nginx:latest .
 cd ..
 ```
 
-Or push to a container registry:
+#### Using Container Registry
+
+Alternatively, build and push to a registry:
+
 ```bash
-docker tag custom-nginx:latest your-registry/custom-nginx:latest
+cd nginx-custom
+docker build -t your-registry/custom-nginx:latest .
 docker push your-registry/custom-nginx:latest
+cd ..
+
 # Update deployment.yaml to use your-registry/custom-nginx:latest
 ```
 
@@ -268,6 +292,24 @@ Once everything is deployed, you can:
    ```
 
 ## Cleanup
+
+### Using the Uninstall Script (Recommended)
+
+The easiest way to clean up is to use the provided uninstall script:
+
+```bash
+./uninstall-monitoring.sh
+```
+
+This interactive script will:
+- Remove all nginx-with-exporter resources
+- Optionally uninstall Prometheus Operator
+- Clean up the monitoring namespace
+- Optionally remove custom Docker images
+
+### Manual Cleanup
+
+If you prefer to clean up manually:
 
 ```bash
 # Remove nginx deployment
