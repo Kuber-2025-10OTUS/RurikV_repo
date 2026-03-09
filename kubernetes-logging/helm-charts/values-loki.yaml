@@ -80,6 +80,16 @@ singleBinary:
       value: "infra"
       effect: "NoSchedule"
 
+# Disable simple scalable mode (conflicts with singleBinary)
+backend:
+  replicas: 0
+
+read:
+  replicas: 0
+
+write:
+  replicas: 0
+
 # Gateway configuration
 gateway:
   enabled: true
@@ -95,6 +105,53 @@ gateway:
       operator: "Equal"
       value: "infra"
       effect: "NoSchedule"
+
+# Configure memcached caches to use infra nodes
+chunksCache:
+  enabled: true
+
+  # Node selection - schedule on infra nodes
+  nodeSelector:
+    node-role: infra
+
+  # Tolerations for infra nodes
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+resultsCache:
+  enabled: true
+
+  # Node selection - schedule on infra nodes
+  nodeSelector:
+    node-role: infra
+
+  # Tolerations for infra nodes
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
 
 # Disable test pods
 test:
