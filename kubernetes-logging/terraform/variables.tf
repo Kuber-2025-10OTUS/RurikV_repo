@@ -32,7 +32,7 @@ variable "cluster_name" {
 variable "network_name" {
   description = "Network name"
   type        = string
-  default     "logging-network"
+  default     = "logging-network"
 }
 
 variable "subnet_name" {
@@ -44,7 +44,7 @@ variable "subnet_name" {
 variable "subnet_cidr" {
   description = "Subnet CIDR"
   type        = string
-  default     "10.96.0.0/24"
+  default     = "10.96.0.0/24"
 }
 
 variable "k8s_sa_name" {

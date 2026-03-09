@@ -159,13 +159,15 @@ kubectl get svc -n monitoring grafana
 
 ### 4.4 Explore Logs in Grafana
 
+The Loki datasource should be pre-configured via the Grafana sidecar. If it's not showing up or you need to add it manually:
+
   1. Open Grafana in your browser
-  2. Go to Connections → Data sources → Add new data source
-  3. Select Loki
-  4. Configure:
-    - Name: Loki
-    - URL: http://loki-write.monitoring.svc.cluster.local:3100
-    - Access: Server (default)
+  2. Go to Connections → Data sources
+  3. Look for "Loki" datasource (should already exist)
+  4. If not present, click "Add new data source":
+     - Name: Loki
+     - URL: http://loki-backend.monitoring.svc.cluster.local:3100
+     - Access: Server (default)
   5. Click Save & test
 
   6. Explore Logs

@@ -37,81 +37,50 @@ loki:
           prefix: index_
           period: 24h
 
-  # Memberlist configuration for single node
+  # Memberlist configuration for single node (not needed for backend mode)
   memberlist:
     join_members:
-      - loki-write-0
+      - loki-backend-0
 
 # Single binary deployment (monolithic mode) - DISABLED
 singleBinary:
   replicas: 0
 
-# Use backend for monolithic deployment - DISABLED
+# Use backend for monolithic deployment - ENABLED
 backend:
+  replicas: 1
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  # Node selection - schedule on infra nodes
+  nodeSelector:
+    node-role: infra
+
+  # Tolerations for infra nodes
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+
+# Disable read and write (backend handles both)
+read:
   replicas: 0
 
-# Use read and write for simple deployment
-read:
-  replicas: 1
-
-  # Resource limits
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 250m
-      memory: 256Mi
-
-  # Node selection - schedule on infra nodes
-  nodeSelector:
-    node-role: infra
-
-  # Tolerations for infra nodes
-  tolerations:
-    - key: "node-role"
-      operator: "Equal"
-      value: "infra"
-      effect: "NoSchedule"
-
 write:
-  replicas: 1
+  replicas: 0
 
-  # Resource limits
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 250m
-      memory: 256Mi
-
-  # Node selection - schedule on infra nodes
-  nodeSelector:
-    node-role: infra
-
-  # Tolerations for infra nodes
-  tolerations:
-    - key: "node-role"
-      operator: "Equal"
-      value: "infra"
-      effect: "NoSchedule"
-
-# Gateway configuration
+# Gateway configuration (disabled for backend mode)
 gateway:
-  enabled: true
-  replicas: 1
-
-  # Node selection - schedule on infra nodes
-  nodeSelector:
-    node-role: infra
-
-  # Tolerations for infra nodes
-  tolerations:
-    - key: "node-role"
-      operator: "Equal"
-      value: "infra"
-      effect: "NoSchedule"
+  enabled: false
+  replicas: 0
 
 # Configure memcached caches to use infra nodes
 chunksCache:
