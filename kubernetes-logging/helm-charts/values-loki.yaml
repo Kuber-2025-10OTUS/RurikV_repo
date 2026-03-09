@@ -1,0 +1,121 @@
+# Loki Helm Chart Values
+# Install command:
+# helm repo add grafana https://grafana.github.io/helm-charts
+# helm repo update
+# helm upgrade --install loki grafana/loki -n monitoring -f values-loki.yaml
+
+# Disable authentication for simplicity
+loki:
+  auth_enabled: false
+
+  # Schema configuration for S3 storage
+  storage:
+    type: s3
+    s3:
+      # S3 endpoint for Yandex Cloud Object Storage
+      endpoint: storage.yandexcloud.net
+      region: ru-central1
+      bucketNames:
+        chunks: loki-logs-bucket-otus
+        ruler: loki-logs-bucket-otus
+        admin: loki-logs-bucket-otus
+      # Access credentials (should be set via secrets in production)
+      accessKeyId: ${S3_ACCESS_KEY}
+      secretAccessKey: ${S3_SECRET_KEY}
+      s3ForcePathStyle: false
+      insecure: false
+
+  # Schema config for chunks
+  schemaConfig:
+    configs:
+      - from: 2024-01-01
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+
+  # Limits configuration
+  limits_config:
+    retention_period: 168h  # 7 days
+    enforce_metric_name: false
+    reject_old_samples: true
+    reject_old_samples_max_age: 168h
+    max_cache_freshness_per_query: 10m
+    split_queries_by_interval: 15m
+
+  # Compactor configuration for retention
+  compactor:
+    working_directory: /data/loki/compactor
+    shared_store: s3
+    compaction_interval: 10m
+    retention_enabled: true
+    retention_delete_delay: 2h
+    retention_delete_worker_count: 150
+    delete_request_store: s3
+
+# Single binary deployment (monolithic mode)
+singleBinary:
+  replicas: 1
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+  # Node selection - schedule on infra nodes
+  nodeSelector:
+    node-role: infra
+
+  # Tolerations for infra nodes
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+
+# Gateway configuration
+gateway:
+  enabled: true
+  replicas: 1
+
+  # Node selection - schedule on infra nodes
+  nodeSelector:
+    node-role: infra
+
+  # Tolerations for infra nodes
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+
+# Disable test pods
+test:
+  enabled: false
+
+# Monitoring configuration
+monitoring:
+  selfMonitoring:
+    enabled: false
+  lokiCanary:
+    enabled: false
+
+# Service account
+serviceAccount:
+  create: true
+  name: loki
+
+# RBAC
+rbac:
+  create: true
+
+# Persistence
+persistence:
+  enabled: true
+  size: 10Gi

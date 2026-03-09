@@ -1,0 +1,100 @@
+# Grafana Helm Chart Values
+# Install command:
+# helm repo add grafana https://grafana.github.io/helm-charts
+# helm repo update
+# helm upgrade --install grafana grafana/grafana -n monitoring -f values-grafana.yaml
+
+# Admin user credentials
+adminUser: admin
+adminPassword: admin123
+
+# Disable authentication for simplicity in this setup
+grafana.ini:
+  auth.anonymous:
+    enabled: true
+    org_role: Admin
+
+# Resource limits
+resources:
+  limits:
+    cpu: 1
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+# Node selection - schedule on infra nodes
+nodeSelector:
+  node-role: infra
+
+# Tolerations for infra nodes
+tolerations:
+  - key: "node-role"
+    operator: "Equal"
+    value: "infra"
+    effect: "NoSchedule"
+
+# Enable persistence
+persistence:
+  type: pvc
+  enabled: true
+  storageClassName: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+
+# Service account
+serviceAccount:
+  create: true
+  name: grafana
+
+# RBAC
+rbac:
+  create: true
+
+# Sidecar for datasources provisioning
+sidecar:
+  datasources:
+    enabled: true
+    defaultDatasourceEnabled: false
+    datasources:
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki.monitoring:3100
+        isDefault: true
+        editable: true
+        jsonData:
+          maxLines: 1000
+  dashboards:
+    enabled: false
+
+# Disable test pods
+test:
+  enabled: false
+
+# Configure Grafana server
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 3000
+
+# Deployment replicas
+replicas: 1
+
+# Liveness and readiness probes
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  initialDelaySeconds: 60
+  timeoutSeconds: 30
+  failureThreshold: 10
+
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  initialDelaySeconds: 30
+  timeoutSeconds: 10
+  periodSeconds: 10
