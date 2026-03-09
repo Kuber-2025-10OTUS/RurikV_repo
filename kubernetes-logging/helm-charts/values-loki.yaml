@@ -1,4 +1,4 @@
-# Loki Helm Chart Values
+# Loki Helm Chart Values - Minimal Configuration for Homework
 # Install command:
 # helm repo add grafana https://grafana.github.io/helm-charts
 # helm repo update
@@ -18,12 +18,12 @@ loki:
       admin: loki-logs-bucket-otus
     s3:
       # S3 endpoint for Yandex Cloud Object Storage
-      endpoint: storage.yandexcloud.net
+      endpoint: https://storage.yandexcloud.net
       region: ru-central1
       # Access credentials (should be set via secrets in production)
       accessKeyId: ${S3_ACCESS_KEY}
       secretAccessKey: ${S3_SECRET_KEY}
-      s3ForcePathStyle: false
+      s3ForcePathStyle: true
       insecure: false
 
   # Schema config for chunks
@@ -37,37 +37,31 @@ loki:
           prefix: index_
           period: 24h
 
-  # Limits configuration
-  limits_config:
-    retention_period: 168h  # 7 days
-    enforce_metric_name: false
-    reject_old_samples: true
-    reject_old_samples_max_age: 168h
-    max_cache_freshness_per_query: 10m
-    split_queries_by_interval: 15m
+  # Memberlist configuration for single node
+  memberlist:
+    join_members:
+      - loki-write-0
 
-  # Compactor configuration for retention
-  compactor:
-    working_directory: /data/loki/compactor
-    shared_store: s3
-    compaction_interval: 10m
-    retention_enabled: true
-    retention_delete_delay: 2h
-    retention_delete_worker_count: 150
-    delete_request_store: s3
-
-# Single binary deployment (monolithic mode)
+# Single binary deployment (monolithic mode) - DISABLED
 singleBinary:
+  replicas: 0
+
+# Use backend for monolithic deployment - DISABLED
+backend:
+  replicas: 0
+
+# Use read and write for simple deployment
+read:
   replicas: 1
 
   # Resource limits
   resources:
     limits:
-      cpu: 1
-      memory: 1Gi
-    requests:
       cpu: 500m
       memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
 
   # Node selection - schedule on infra nodes
   nodeSelector:
@@ -80,15 +74,28 @@ singleBinary:
       value: "infra"
       effect: "NoSchedule"
 
-# Disable simple scalable mode (conflicts with singleBinary)
-backend:
-  replicas: 0
-
-read:
-  replicas: 0
-
 write:
-  replicas: 0
+  replicas: 1
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  # Node selection - schedule on infra nodes
+  nodeSelector:
+    node-role: infra
+
+  # Tolerations for infra nodes
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
 
 # Gateway configuration
 gateway:
@@ -108,50 +115,10 @@ gateway:
 
 # Configure memcached caches to use infra nodes
 chunksCache:
-  enabled: true
-
-  # Node selection - schedule on infra nodes
-  nodeSelector:
-    node-role: infra
-
-  # Tolerations for infra nodes
-  tolerations:
-    - key: "node-role"
-      operator: "Equal"
-      value: "infra"
-      effect: "NoSchedule"
-
-  # Resource limits
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 250m
-      memory: 256Mi
+  enabled: false
 
 resultsCache:
-  enabled: true
-
-  # Node selection - schedule on infra nodes
-  nodeSelector:
-    node-role: infra
-
-  # Tolerations for infra nodes
-  tolerations:
-    - key: "node-role"
-      operator: "Equal"
-      value: "infra"
-      effect: "NoSchedule"
-
-  # Resource limits
-  resources:
-    limits:
-      cpu: 500m
-      memory: 512Mi
-    requests:
-      cpu: 250m
-      memory: 256Mi
+  enabled: false
 
 # Disable test pods
 test:
@@ -173,7 +140,6 @@ serviceAccount:
 rbac:
   create: true
 
-# Persistence
+# Persistence - DISABLED for S3 storage
 persistence:
-  enabled: true
-  size: 10Gi
+  enabled: false

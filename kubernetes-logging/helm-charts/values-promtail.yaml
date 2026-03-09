@@ -7,7 +7,7 @@
 # Main configuration
 config:
   clients:
-    - url: http://loki.monitoring:3100/loki/api/v1/push
+    - url: http://loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push
       tenant_id: ""
 
   # Scrape configurations
@@ -30,12 +30,16 @@ daemonset:
       cpu: 100m
       memory: 128Mi
 
-  # Tolerations for infra nodes (also needs to run on them)
-  tolerations:
-    - key: "node-role"
-      operator: "Equal"
-      value: "infra"
-      effect: "NoSchedule"
+# Tolerations - set at the top level for the Promtail chart
+tolerations:
+  - key: "node-role"
+    operator: "Equal"
+    value: "infra"
+    effect: "NoSchedule"
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+  - key: "node-role.kubernetes.io/master"
+    operator: "Exists"
 
 # Service account
 serviceAccount:
@@ -45,6 +49,7 @@ serviceAccount:
 # RBAC
 rbac:
   create: true
+  createClusterRole: true
 
 # Disable test pods
 test:
