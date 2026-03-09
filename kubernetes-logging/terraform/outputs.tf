@@ -7,7 +7,7 @@ output "cluster_name" {
 }
 
 output "cluster_endpoint" {
-  value = yandex_kubernetes_cluster.this.master[0].public_endpoint
+  value = yandex_kubernetes_cluster.this.master[0].external_v4_endpoint
 }
 
 output "bucket_name" {

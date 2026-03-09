@@ -26,7 +26,7 @@ bucket_name = "loki-logs-bucket-otus"  # Must be globally unique
 worker_node_count = 1
 infra_node_count  = 1
 
-worker_node_memory = 4  # GB
+worker_node_memory = 8  # GB
 worker_node_cores  = 2  # vCPUs
 
 infra_node_memory = 8  # GB

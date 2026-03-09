@@ -1,8 +1,8 @@
 # Managed Kubernetes cluster
 resource "yandex_kubernetes_cluster" "this" {
-  name        = var.cluster_name
-  network_id  = yandex_vpc_network.this.id
-  folder_id   = var.yc_folder_id
+  name       = var.cluster_name
+  network_id = yandex_vpc_network.this.id
+  folder_id  = var.yc_folder_id
 
   # Master configuration
   master {
@@ -29,8 +29,8 @@ resource "yandex_kubernetes_cluster" "this" {
   service_account_id      = yandex_iam_service_account.k8s.id
   node_service_account_id = yandex_iam_service_account.k8s.id
 
-  # Kubernetes version
-  version = "1.28"
+  ## Kubernetes version
+  # version = "1.28"
 
   # Cluster features
   release_channel = "REGULAR"
@@ -53,18 +53,6 @@ resource "yandex_kubernetes_node_group" "worker" {
   cluster_id  = yandex_kubernetes_cluster.this.id
   name        = "worker-nodes"
   description = "Worker nodes for application workloads"
-
-  # Node configuration
-  node_resources {
-    memory = var.worker_node_memory
-    cores  = var.worker_node_cores
-  }
-
-  # Boot disk configuration
-  boot_disk {
-    type = var.node_disk_type
-    size = var.node_disk_size
-  }
 
   # Scaling
   scale_policy {
@@ -91,10 +79,8 @@ resource "yandex_kubernetes_node_group" "worker" {
     }
 
     boot_disk {
-      initialize_params {
-        type = var.node_disk_type
-        size = var.node_disk_size
-      }
+      type = var.node_disk_type
+      size = var.node_disk_size
     }
 
     network_interface {
@@ -123,18 +109,6 @@ resource "yandex_kubernetes_node_group" "infra" {
   name        = "infra-nodes"
   description = "Infrastructure nodes for monitoring/logging components"
 
-  # Node configuration
-  node_resources {
-    memory = var.infra_node_memory
-    cores  = var.infra_node_cores
-  }
-
-  # Boot disk configuration
-  boot_disk {
-    type = var.node_disk_type
-    size = var.node_disk_size
-  }
-
   # Scaling
   scale_policy {
     fixed_scale {
@@ -160,10 +134,8 @@ resource "yandex_kubernetes_node_group" "infra" {
     }
 
     boot_disk {
-      initialize_params {
-        type = var.node_disk_type
-        size = var.node_disk_size
-      }
+      type = var.node_disk_type
+      size = var.node_disk_size
     }
 
     network_interface {
@@ -176,12 +148,8 @@ resource "yandex_kubernetes_node_group" "infra" {
       "node-role" = "infra"
     }
 
-    # Taint to prevent scheduling of regular workloads
-    taint {
-      key    = "node-role"
-      value  = "infra"
-      effect = "NoSchedule"
-    }
+    # Note: Taints can be applied via kubectl after cluster creation:
+    # kubectl taint nodes -l node-role=infra node-role=infra:NoSchedule
   }
 
   # Maintenance policy
@@ -191,20 +159,20 @@ resource "yandex_kubernetes_node_group" "infra" {
   }
 }
 
-# Outputs
-output "cluster_id" {
-  value = yandex_kubernetes_cluster.this.id
-}
-
-output "cluster_name" {
-  value = yandex_kubernetes_cluster.this.name
-}
-
-output "cluster_endpoint" {
-  value = yandex_kubernetes_cluster.this.master[0].public_endpoint
-}
-
-# Command to get kubeconfig
-output "kubeconfig_command" {
-  value = "yc managed-kubernetes cluster get-credentials ${yandex_kubernetes_cluster.this.name} --external"
-}
+## Outputs
+# output "cluster_id" {
+# value = yandex_kubernetes_cluster.this.id
+# }
+#
+# output "cluster_name" {
+# value = yandex_kubernetes_cluster.this.name
+# }
+#
+# output "cluster_endpoint" {
+# value = yandex_kubernetes_cluster.this.master[0].public_endpoint
+# }
+#
+## Command to get kubeconfig
+# output "kubeconfig_command" {
+# value = "yc managed-kubernetes cluster get-credentials ${yandex_kubernetes_cluster.this.name} --external"
+# }

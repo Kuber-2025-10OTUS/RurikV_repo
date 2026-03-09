@@ -47,13 +47,3 @@ resource "yandex_iam_service_account_static_access_key" "s3" {
   service_account_id = yandex_iam_service_account.s3.id
   description        = "Static access key for S3 service account"
 }
-
-output "s3_access_key" {
-  value     = yandex_iam_service_account_static_access_key.s3.access_key
-  sensitive = true
-}
-
-output "s3_secret_key" {
-  value     = yandex_iam_service_account_static_access_key.s3.secret_key
-  sensitive = true
-}

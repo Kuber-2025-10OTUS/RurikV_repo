@@ -28,6 +28,6 @@ resource "yandex_kms_symmetric_key" "loki" {
   rotation_period   = "8760h" # 1 year
 }
 
-output "bucket_name" {
-  value = yandex_storage_bucket.loki.bucket
-}
+# output "bucket_name" {
+# value = yandex_storage_bucket.loki.bucket
+# }
