@@ -14,7 +14,7 @@ grafana.ini:
     enabled: true
     org_role: Admin
   server:
-    root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana"
+    root_url: "%(protocol)s://%(domain)s:%(http_port)s/"
 
 # Resource limits
 resources:
@@ -101,11 +101,3 @@ readinessProbe:
   initialDelaySeconds: 30
   timeoutSeconds: 10
   periodSeconds: 10
-
-# Ingress (optional - uncomment if needed)
-# ingress:
-#   enabled: true
-#   annotations:
-#     kubernetes.io/ingress.class: nginx
-#   hosts:
-#     - grafana.local

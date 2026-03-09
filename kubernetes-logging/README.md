@@ -159,11 +159,23 @@ kubectl get svc -n monitoring grafana
 
 ### 4.4 Explore Logs in Grafana
 
-1. Open Grafana
-2. Navigate to **Explore** (left sidebar)
-3. Select **Loki** datasource
-4. Run query: `{job="promtail/"}`
-5. Verify logs are displayed
+  1. Open Grafana in your browser
+  2. Go to Connections → Data sources → Add new data source
+  3. Select Loki
+  4. Configure:
+    - Name: Loki
+    - URL: http://loki-write.monitoring.svc.cluster.local:3100
+    - Access: Server (default)
+  5. Click Save & test
+
+  6. Explore Logs
+
+  7. Go to Explore (left sidebar)
+  8. Select Loki datasource
+  9. Try these queries:
+    - {job="promtail/"}
+    - {filename="/var/log/pods/*/*/*.log"}
+    - {container="promtail"}
 
 Take a screenshot of the Grafana Explore page showing logs for homework submission.
 
