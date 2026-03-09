@@ -8,7 +8,8 @@ resource "yandex_kubernetes_cluster" "this" {
   master {
     # Zonal master
     zonal {
-      zone = var.yc_zone != null ? var.yc_zone : "ru-central1-a"
+      zone      = var.yc_zone != null ? var.yc_zone : "ru-central1-a"
+      subnet_id = yandex_vpc_subnet.this.id
     }
 
     # Public IP for API server
@@ -158,21 +159,3 @@ resource "yandex_kubernetes_node_group" "infra" {
     auto_repair  = true
   }
 }
-
-## Outputs
-# output "cluster_id" {
-# value = yandex_kubernetes_cluster.this.id
-# }
-#
-# output "cluster_name" {
-# value = yandex_kubernetes_cluster.this.name
-# }
-#
-# output "cluster_endpoint" {
-# value = yandex_kubernetes_cluster.this.master[0].public_endpoint
-# }
-#
-## Command to get kubeconfig
-# output "kubeconfig_command" {
-# value = "yc managed-kubernetes cluster get-credentials ${yandex_kubernetes_cluster.this.name} --external"
-# }

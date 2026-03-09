@@ -84,21 +84,27 @@ kubectl create namespace monitoring
 
 ### 3.3 Install Loki
 
+First, set S3 credentials as environment variables from terraform outputs:
+
+```bash
+# Get S3 credentials from terraform and export as env vars
+export S3_ACCESS_KEY=$(terraform output -raw s3_access_key)
+export S3_SECRET_KEY=$(terraform output -raw s3_secret_key)
+
+# Verify the variables are set
+echo "S3_ACCESS_KEY: ${S3_ACCESS_KEY:0:10}..."
+echo "S3_SECRET_KEY: ${S3_SECRET_KEY:0:10}..."
+```
+
+Then install Loki:
+
 ```bash
 helm upgrade --install loki grafana/loki \
   -n monitoring \
   -f ../helm-charts/values-loki.yaml
 ```
 
-**Note**: Update `values-loki.yaml` with your S3 credentials:
-- Replace `${S3_ACCESS_KEY}` with actual access key from terraform output
-- Replace `${S3_SECRET_KEY}` with actual secret key from terraform output
-
-Get S3 credentials:
-```bash
-terraform output -raw s3_access_key
-terraform output -raw s3_secret_key
-```
+**Note**: The `values-loki.yaml` uses environment variables `${S3_ACCESS_KEY}` and `${S3_SECRET_KEY}` which will be substituted by Helm during installation.
 
 ### 3.4 Install Promtail
 
@@ -206,7 +212,22 @@ kubectl get pod -n monitoring -o wide
 
 ### Loki cannot connect to S3
 
-Verify S3 credentials in values-loki.yaml match terraform outputs.
+Verify S3 credentials are set as environment variables:
+```bash
+echo $S3_ACCESS_KEY
+echo $S3_SECRET_KEY
+```
+
+If not set, run:
+```bash
+export S3_ACCESS_KEY=$(terraform output -raw s3_access_key)
+export S3_SECRET_KEY=$(terraform output -raw s3_secret_key)
+```
+
+Then reinstall Loki:
+```bash
+helm upgrade --install loki grafana/loki -n monitoring -f ../helm-charts/values-loki.yaml
+```
 
 ### Grafana not showing logs
 
