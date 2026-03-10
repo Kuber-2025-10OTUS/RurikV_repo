@@ -23,7 +23,7 @@ spec:
   # Application source (Git repository)
   source:
     # Repository URL
-    repoURL: 'https://github.com/RurikV/otus-k8s-samoair.git'
+    repoURL: "https://github.com/samoair/otus-k8s-samoair.git"
     # Target branch
     targetRevision: main
     # Path to manifests in repository
@@ -50,7 +50,7 @@ spec:
       allowEmpty: false
     # Sync options
     syncOptions:
-      - CreateNamespace=true  # Create namespace if not exists
+      - CreateNamespace=true # Create namespace if not exists
       - PrunePropagationPolicy=foreground
       - PruneLast=true
     # Retry configuration
@@ -70,26 +70,19 @@ spec:
       kind: Deployment
       jsonPointers:
         - /spec/replicas
-    - group: ''
+    - group: ""
       kind: Service
       jsonPointers:
         - /spec/clusterIP
         - /spec/clusterIPs
 
-  # Application health checks
-  healthCheck:
-    # Number of seconds to wait between health checks
-    interval: 30
-    # Number of retries for health check
-    timeout: 60
-
   # Application info
   info:
-    - name: 'Description'
-      value: 'Kubernetes Networks Homework - Network policies and ingress management'
-    - name: 'Author'
-      value: 'Otus Student'
-    - name: 'Sync Policy'
-      value: 'Manual - sync triggered manually via CLI or UI'
-    - name: 'Source Directory'
-      value: '../kubernetes-networks (relative to kubernetes-gitops)'
+    - name: "Description"
+      value: "Kubernetes Networks Homework - Network policies and ingress management"
+    - name: "Author"
+      value: "Otus Student"
+    - name: "Sync Policy"
+      value: "Manual - sync triggered manually via CLI or UI"
+    - name: "Source Directory"
+      value: "../kubernetes-networks (relative to kubernetes-gitops)"

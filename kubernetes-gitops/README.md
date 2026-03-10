@@ -7,7 +7,29 @@ This homework demonstrates GitOps practices using ArgoCD to deploy and manage Ku
 - Yandex Cloud Managed Kubernetes cluster (from previous homeworks)
 - kubectl configured to access the cluster
 - Helm installed
+- ArgoCD CLI installed
 - Infra nodes configured with `node-role=infra:NoSchedule` taint and label
+
+### Install ArgoCD CLI
+
+**macOS (Homebrew):**
+```bash
+brew install argocd
+```
+
+**Linux (binary download):**
+```bash
+# Download latest version
+VERSION=$(curl -s https://api.github.com/repos/argoproj/argo-cd/releases/latest | grep 'tag_name' | awk -F '"' '{print $2}')
+curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/download/$VERSION/argocd-linux-amd64
+chmod +x argocd
+sudo mv argocd /usr/local/bin/argocd
+```
+
+**Verify installation:**
+```bash
+argocd version --short
+```
 
 ## Repository Structure
 
@@ -81,14 +103,44 @@ helm upgrade --install argocd argo/argo-cd \
 - This ensures ArgoCD control plane runs only on infra nodes
 - Worker nodes remain free for application workloads
 
-### 1.4 Access ArgoCD UI
+### 1.4 Configure ArgoCD CLI Access
+
+The ArgoCD CLI needs to connect to the ArgoCD server. Choose one of the following methods:
+
+**Method 1: Port-forward (recommended for local access)**
+```bash
+# In one terminal, start port-forward
+kubectl port-forward -n argocd svc/argocd-server 8080:443
+
+# In another terminal, login to ArgoCD
+argocd login localhost:8080 --username admin --password <initial-password>
+
+# Or get password and login in one command
+argocd login localhost:8080 --username admin --password \
+  $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)
+```
+
+**Method 2: LoadBalancer (if external access needed)**
+```bash
+# Get LoadBalancer IP
+EXTERNAL_IP=$(kubectl get svc argocd-server -n argocd -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+argocd login "$EXTERNAL_IP:443" --username admin --password \
+  $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)
+```
+
+**Verify connection:**
+```bash
+argocd cluster list
+```
+
+### 1.5 Access ArgoCD UI
 
 ```bash
 # Get initial admin password
 kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath='{.data.password}' | base64 -d && echo
 
-# Port-forward to access ArgoCD UI
+# Port-forward to access ArgoCD UI (if not already running)
 kubectl port-forward -n argocd svc/argocd-server 8080:443
 
 # Open browser: https://localhost:8080
@@ -107,7 +159,7 @@ kubectl apply -f argocd-project-otus.yaml
 
 **Project Configuration:**
 - Name: `otus`
-- Source Repositories: Your homework repository (`https://github.com/RurikV/otus-k8s-samoair.git`)
+- Source Repositories: Your homework repository (`https://github.com/samoair/otus-k8s-samoair.git`)
 - Destinations: Current cluster (selected namespaces only)
 - Cluster Resource Whitelist: Limited to specific namespaces
 - Namespace Resource Whitelist: Limited to homework namespaces
@@ -213,6 +265,36 @@ ls -la ../kubernetes-templating/helm-chart
 ```
 
 ## Troubleshooting
+
+### ArgoCD CLI Not Found
+
+```bash
+# Install argocd CLI
+# macOS:
+brew install argocd
+
+# Linux:
+VERSION=$(curl -s https://api.github.com/repos/argoproj/argo-cd/releases/latest | grep 'tag_name' | awk -F '"' '{print $2}')
+curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/download/$VERSION/argocd-linux-amd64
+chmod +x argocd
+sudo mv argocd /usr/local/bin/argocd
+```
+
+### ArgoCD CLI Cannot Connect to Server
+
+```bash
+# Ensure you're logged in to ArgoCD
+argocd cluster list
+
+# If error, re-login:
+# With port-forward running:
+argocd login localhost:8080 --username admin --password \
+  $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)
+
+# Or use ARGOCD_OPTS environment variable:
+export ARGOCD_OPTS="--server localhost:8080 --grpc-web"
+argocd cluster list
+```
 
 ### ArgoCD Server Not Starting
 

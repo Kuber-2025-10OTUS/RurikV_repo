@@ -24,7 +24,7 @@ spec:
   # Application source (Git repository)
   source:
     # Repository URL
-    repoURL: 'https://github.com/RurikV/otus-k8s-samoair.git'
+    repoURL: "https://github.com/samoair/otus-k8s-samoair.git"
     # Target branch
     targetRevision: main
     # Path to Helm chart in repository
@@ -60,18 +60,18 @@ spec:
   syncPolicy:
     automated:
       # Enable automatic sync
-      prune: true        # Remove resources when deleted from Git
-      selfHeal: true    # Correct configuration drift automatically
+      prune: true # Remove resources when deleted from Git
+      selfHeal: true # Correct configuration drift automatically
       allowEmpty: false # Prevent deleting all resources
     # Sync options
     syncOptions:
-      - CreateNamespace=true  # Create namespace if not exists
+      - CreateNamespace=true # Create namespace if not exists
       - PrunePropagationPolicy=foreground
       - PruneLast=true
       - RespectIgnoreDifferences=true
     # Retry configuration
     retry:
-      limit: 10  # More retries for auto-sync
+      limit: 10 # More retries for auto-sync
       backoff:
         duration: 5s
         factor: 2
@@ -88,34 +88,29 @@ spec:
       jsonPointers:
         - /spec/replicas
     # Allow service cluster IP changes
-    - group: ''
+    - group: ""
       kind: Service
       jsonPointers:
         - /spec/clusterIP
         - /spec/clusterIPs
     # Allow secret updates
-    - group: ''
+    - group: ""
       kind: Secret
       jsonPointers:
         - /data
 
-  # Application health checks
-  healthCheck:
-    interval: 15  # More frequent health checks for auto-sync
-    timeout: 60
-
   # Application info
   info:
-    - name: 'Description'
-      value: 'Kubernetes Templating Homework - Helm chart with custom templates'
-    - name: 'Author'
-      value: 'Otus Student'
-    - name: 'Sync Policy'
-      value: 'Auto - continuous sync from Git with self-healing'
-    - name: 'Override'
-      value: 'replicaCount: 2'
-    - name: 'Source Directory'
-      value: '../kubernetes-templating/helm-chart (relative to kubernetes-gitops)'
+    - name: "Description"
+      value: "Kubernetes Templating Homework - Helm chart with custom templates"
+    - name: "Author"
+      value: "Otus Student"
+    - name: "Sync Policy"
+      value: "Auto - continuous sync from Git with self-healing"
+    - name: "Override"
+      value: "replicaCount: 2"
+    - name: "Source Directory"
+      value: "../kubernetes-templating/helm-chart (relative to kubernetes-gitops)"
 
   # Application dependencies (optional - sync order)
   # This application can sync independently
