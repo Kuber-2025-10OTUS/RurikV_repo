@@ -1,6 +1,12 @@
 # ArgoCD Application: kubernetes-networks
 # This application deploys kubernetes-networks homework with MANUAL sync policy
 # Apply: kubectl apply -f app-kubernetes-networks.yaml
+#
+# Directory structure (all in same repo):
+# otus-k8s-samoair/
+# ├── kubernetes-networks/     <-- Source directory for this app
+# ├── kubernetes-templating/
+# └── kubernetes-gitops/       <-- This directory
 
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -21,6 +27,7 @@ spec:
     # Target branch
     targetRevision: main
     # Path to manifests in repository
+    # This references ../kubernetes-networks directory in the repo
     path: kubernetes-networks/
     # Kustomize configuration (if using)
     kustomize:
@@ -84,13 +91,5 @@ spec:
       value: 'Otus Student'
     - name: 'Sync Policy'
       value: 'Manual - sync triggered manually via CLI or UI'
-
-status:
-  # Application status will be populated by ArgoCD
-  health:
-    status: Unknown
-  operationState:
-    phase: Running
-  sync:
-    status: OutOfSync
-  reconciledAt: null
+    - name: 'Source Directory'
+      value: '../kubernetes-networks (relative to kubernetes-gitops)'

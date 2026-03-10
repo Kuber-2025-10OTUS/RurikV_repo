@@ -1,6 +1,13 @@
 # ArgoCD Application: kubernetes-templating
 # This application deploys kubernetes-templating homework with AUTO sync policy and Helm overrides
 # Apply: kubectl apply -f app-kubernetes-templating.yaml
+#
+# Directory structure (all in same repo):
+# otus-k8s-samoair/
+# ├── kubernetes-networks/
+# ├── kubernetes-templating/     <-- Source directory for this app
+# │   └── helm-chart/            <-- Helm chart location
+# └── kubernetes-gitops/        <-- This directory
 
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -21,6 +28,7 @@ spec:
     # Target branch
     targetRevision: main
     # Path to Helm chart in repository
+    # This references ../kubernetes-templating/helm-chart/ directory in the repo
     path: kubernetes-templating/helm-chart/
 
     # Helm configuration
@@ -106,17 +114,9 @@ spec:
       value: 'Auto - continuous sync from Git with self-healing'
     - name: 'Override'
       value: 'replicaCount: 2'
+    - name: 'Source Directory'
+      value: '../kubernetes-templating/helm-chart (relative to kubernetes-gitops)'
 
   # Application dependencies (optional - sync order)
   # This application can sync independently
   # dependencies: []
-
-status:
-  # Application status will be populated by ArgoCD
-  health:
-    status: Unknown
-  operationState:
-    phase: Running
-  sync:
-    status: OutOfSync
-  reconciledAt: null

@@ -86,17 +86,3 @@ spec:
 
   # OIDC configuration (optional)
   oidcConfig: null
-
-status:
-  # Project is active
-  sourceRepos:
-    - 'https://github.com/RurikV/otus-k8s-samoair.git'
-  destinations:
-    - namespace: '*'
-      server: https://kubernetes.default.svc
-  clusterResourceWhitelist:
-    - group: ''
-      kind: Namespace
-  namespaceResourceWhitelist:
-    - group: '*'
-      kind: '*'

@@ -9,6 +9,23 @@ This homework demonstrates GitOps practices using ArgoCD to deploy and manage Ku
 - Helm installed
 - Infra nodes configured with `node-role=infra:NoSchedule` taint and label
 
+## Repository Structure
+
+```
+RurikV_repo/ (or your fork: otus-k8s-samoair)
+├── kubernetes-networks/       ← Application source code (kubernetes-networks homework)
+├── kubernetes-templating/     ← Application source code (kubernetes-templating homework)
+│   └── helm-chart/            ← Helm chart for kubernetes-templating
+└── kubernetes-gitops/         ← This directory (ArgoCD configuration only)
+    ├── README.md
+    ├── argocd-values.yaml
+    ├── argocd-project-otus.yaml
+    ├── app-kubernetes-networks.yaml
+    └── app-kubernetes-templating.yaml
+```
+
+**Important:** The `kubernetes-gitops/` directory contains only ArgoCD manifests that reference the sibling application directories (`../kubernetes-networks` and `../kubernetes-templating`).
+
 ## Architecture
 
 ```
@@ -24,13 +41,13 @@ This homework demonstrates GitOps practices using ArgoCD to deploy and manage Ku
 │                       Project: Otus                         │
 ├─────────────────────────────────────────────────────────────┤
 │  Application 1: kubernetes-networks (manual sync)           │
+│  - Source: ../kubernetes-networks/                          │
 │  - Namespace: homework                                      │
-│  - Source: kubernetes-networks/                             │
 │  - Dest: Cluster                                            │
 ├─────────────────────────────────────────────────────────────┤
-│  Application 2: kubernetes-templating (auto sync)           │
+│  Application 2: kubernetes-templating (auto sync)            │
+│  - Source: ../kubernetes-templating/helm-chart/              │
 │  - Namespace: HomeworkHelm                                  │
-│  - Source: kubernetes-templating/helm-chart/                │
 │  - Helm override: replicas=2                                │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -67,19 +84,16 @@ helm upgrade --install argocd argo/argo-cd \
 ### 1.4 Access ArgoCD UI
 
 ```bash
+# Get initial admin password
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath='{.data.password}' | base64 -d && echo
+
 # Port-forward to access ArgoCD UI
 kubectl port-forward -n argocd svc/argocd-server 8080:443
 
 # Open browser: https://localhost:8080
-# Default credentials:
 # Username: admin
-# Password: <get from secret>
-```
-
-Get initial password:
-```bash
-kubectl -n argocd get secret argocd-initial-admin-secret \
-  -o jsonpath='{.data.password}' | base64 -d
+# Password: <use password from command above>
 ```
 
 ## Step 2: Create ArgoCD Project "Otus"
@@ -93,7 +107,7 @@ kubectl apply -f argocd-project-otus.yaml
 
 **Project Configuration:**
 - Name: `otus`
-- Source Repositories: Your homework repository
+- Source Repositories: Your homework repository (`https://github.com/RurikV/otus-k8s-samoair.git`)
 - Destinations: Current cluster (selected namespaces only)
 - Cluster Resource Whitelist: Limited to specific namespaces
 - Namespace Resource Whitelist: Limited to homework namespaces
@@ -101,7 +115,7 @@ kubectl apply -f argocd-project-otus.yaml
 
 ## Step 3: Deploy kubernetes-networks Application (Manual Sync)
 
-This application deploys the kubernetes-networks homework with manual sync policy.
+This application deploys the kubernetes-networks homework from the sibling directory.
 
 **Apply Application Manifest:**
 ```bash
@@ -113,7 +127,7 @@ kubectl apply -f app-kubernetes-networks.yaml
 - **Project:** `otus`
 - **Sync Policy:** Manual (requires manual sync trigger)
 - **Namespace:** `homework`
-- **Source:** `kubernetes-networks/` directory in repository
+- **Source:** `kubernetes-networks/` directory (sibling to this directory)
 - **Destination:** Current cluster, namespace `homework`
 
 **Sync Manually:**
@@ -145,7 +159,7 @@ kubectl apply -f app-kubernetes-templating.yaml
 - **Auto-Prune:** `true` (removes resources when deleted from Git)
 - **Self-Heal:** `true` (corrects drift)
 - **Namespace:** `HomeworkHelm`
-- **Source:** `kubernetes-templating/helm-chart/` directory
+- **Source:** `kubernetes-templating/helm-chart/` directory (sibling to this directory)
 - **Helm Override:** `replicas: 2` (demonstrates value customization)
 
 **Key Features:**
@@ -190,6 +204,14 @@ kubectl get ns
 # HomeworkHelm   - for kubernetes-templating
 ```
 
+### Verify Source Directory References
+
+```bash
+# From kubernetes-gitops directory, verify sibling directories exist
+ls -la ../kubernetes-networks
+ls -la ../kubernetes-templating/helm-chart
+```
+
 ## Troubleshooting
 
 ### ArgoCD Server Not Starting
@@ -213,6 +235,17 @@ argocd app sync <app-name> --debug
 
 # Check application events
 argocd app get <app-name> --show-events
+```
+
+### Application Shows "Failed to sync" due to repository path
+
+```bash
+# Verify the path exists in your repository
+git ls-remote --heads git@github.com:RurikV/otus-k8s-samoair.git
+
+# Or check locally
+ls -la ../kubernetes-networks
+ls -la ../kubernetes-templating/helm-chart
 ```
 
 ### Project Access Denied
@@ -243,12 +276,22 @@ kubectl delete namespace homework HomeworkHelm
 ## Files Structure
 
 ```
-kubernetes-gitops/
-├── README.md                      # This file
-├── argocd-values.yaml             # Helm values for ArgoCD (infra node placement)
-├── argocd-project-otus.yaml       # ArgoCD project manifest
-├── app-kubernetes-networks.yaml   # Application for kubernetes-networks
-└── app-kubernetes-templating.yaml # Application for kubernetes-templating
+kubernetes-gitops/              (This directory - ArgoCD manifests only)
+├── README.md                    # This file
+├── argocd-values.yaml           # Helm values for ArgoCD (infra node placement)
+├── argocd-project-otus.yaml     # ArgoCD project manifest
+├── app-kubernetes-networks.yaml  # Application manifest for ../kubernetes-networks
+└── app-kubernetes-templating.yaml # Application manifest for ../kubernetes-templating
+
+../kubernetes-networks/          (Sibling directory - application source code)
+├── manifests/
+└── ...
+
+../kubernetes-templating/        (Sibling directory - application source code)
+└── helm-chart/
+    ├── Chart.yaml
+    ├── values.yaml
+    └── templates/
 ```
 
 ## Homework Submission Checklist
@@ -264,3 +307,4 @@ kubernetes-gitops/
   - [ ] kubernetes-networks application (manual sync)
   - [ ] kubernetes-templating application (auto-synced)
   - [ ] Pods in separate namespaces (homework, HomeworkHelm)
+  - [ ] Application source showing correct directory paths
