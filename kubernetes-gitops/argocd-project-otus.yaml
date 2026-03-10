@@ -17,9 +17,9 @@ spec:
   # Replace <YOUR_GITHUB_USERNAME> with your actual GitHub username or repository URL
   sourceRepos:
     # Allow your homework repository
-    - "https://github.com/samoair/otus-k8s-samoair.git"
+    - "https://github.com/samoair/RurikV_repo.git"
     # You can also add your fork/repository URL here
-    # - 'https://github.com/<YOUR_USERNAME>/otus-k8s-samoair.git'
+    # - 'https://github.com/<YOUR_USERNAME>/RurikV_repo.git'
 
   # Destination clusters and namespaces
   destinations:
@@ -43,13 +43,6 @@ spec:
   namespaceResourceWhitelist:
     - group: "*"
       kind: "*"
-
-  # Deny specific resource patterns
-  namespaceResourceBlacklist:
-    # Prevent creating resources in system namespaces
-    - group: "*"
-      kind: "*"
-      # Note: This is handled by destination restrictions in destinations
 
   # Synchronization windows (optional - time-based sync restrictions)
   syncWindows:

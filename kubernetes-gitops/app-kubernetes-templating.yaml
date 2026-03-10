@@ -3,10 +3,10 @@
 # Apply: kubectl apply -f app-kubernetes-templating.yaml
 #
 # Directory structure (all in same repo):
-# otus-k8s-samoair/
+# RurikV_repo/
 # ├── kubernetes-networks/
 # ├── kubernetes-templating/     <-- Source directory for this app
-# │   └── helm-chart/            <-- Helm chart location
+# │   └── web-server/            <-- Helm chart location
 # └── kubernetes-gitops/        <-- This directory
 
 apiVersion: argoproj.io/v1alpha1
@@ -24,12 +24,12 @@ spec:
   # Application source (Git repository)
   source:
     # Repository URL
-    repoURL: "https://github.com/samoair/otus-k8s-samoair.git"
+    repoURL: "https://github.com/samoair/RurikV_repo.git"
     # Target branch
     targetRevision: main
     # Path to Helm chart in repository
-    # This references ../kubernetes-templating/helm-chart/ directory in the repo
-    path: kubernetes-templating/helm-chart/
+    # This references ../kubernetes-templating/web-server/ directory in the repo
+    path: kubernetes-templating/web-server/
 
     # Helm configuration
     helm:
@@ -54,7 +54,7 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     # Different namespace from kubernetes-networks application
-    namespace: HomeworkHelm
+    namespace: homeworkhelm
 
   # Sync policy - AUTOMATIC with self-healing and pruning
   syncPolicy:

@@ -3,7 +3,7 @@
 # Apply: kubectl apply -f app-kubernetes-networks.yaml
 #
 # Directory structure (all in same repo):
-# otus-k8s-samoair/
+# RurikV_repo/
 # ├── kubernetes-networks/     <-- Source directory for this app
 # ├── kubernetes-templating/
 # └── kubernetes-gitops/       <-- This directory
@@ -23,18 +23,13 @@ spec:
   # Application source (Git repository)
   source:
     # Repository URL
-    repoURL: "https://github.com/samoair/otus-k8s-samoair.git"
+    repoURL: "https://github.com/samoair/RurikV_repo.git"
     # Target branch
     targetRevision: main
     # Path to manifests in repository
     # This references ../kubernetes-networks directory in the repo
     path: kubernetes-networks/
-    # Kustomize configuration (if using)
-    kustomize:
-      # Add commonLabels to distinguish this deployment
-      commonLabels:
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/instance: kubernetes-networks-homework
+    # Directory contains plain YAML manifests (no Kustomize)
 
   # Destination cluster and namespace
   destination:
@@ -42,12 +37,8 @@ spec:
     namespace: homework
 
   # Sync policy - MANUAL (requires manual sync trigger)
+  # Note: No 'automated' section means manual sync
   syncPolicy:
-    automated:
-      # Disable automatic sync
-      prune: false
-      selfHeal: false
-      allowEmpty: false
     # Sync options
     syncOptions:
       - CreateNamespace=true # Create namespace if not exists

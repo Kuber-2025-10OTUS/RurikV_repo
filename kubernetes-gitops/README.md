@@ -34,7 +34,7 @@ argocd version --short
 ## Repository Structure
 
 ```
-RurikV_repo/ (or your fork: otus-k8s-samoair)
+RurikV_repo/ (or your fork: RurikV_repo)
 ├── kubernetes-networks/       ← Application source code (kubernetes-networks homework)
 ├── kubernetes-templating/     ← Application source code (kubernetes-templating homework)
 │   └── helm-chart/            ← Helm chart for kubernetes-templating
@@ -159,7 +159,7 @@ kubectl apply -f argocd-project-otus.yaml
 
 **Project Configuration:**
 - Name: `otus`
-- Source Repositories: Your homework repository (`https://github.com/samoair/otus-k8s-samoair.git`)
+- Source Repositories: Your homework repository (`https://github.com/samoair/RurikV_repo.git`)
 - Destinations: Current cluster (selected namespaces only)
 - Cluster Resource Whitelist: Limited to specific namespaces
 - Namespace Resource Whitelist: Limited to homework namespaces
@@ -323,7 +323,7 @@ argocd app get <app-name> --show-events
 
 ```bash
 # Verify the path exists in your repository
-git ls-remote --heads git@github.com:RurikV/otus-k8s-samoair.git
+git ls-remote --heads git@github.com:RurikV/RurikV_repo.git
 
 # Or check locally
 ls -la ../kubernetes-networks
