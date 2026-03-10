@@ -1,0 +1,122 @@
+# ArgoCD Application: kubernetes-templating
+# This application deploys kubernetes-templating homework with AUTO sync policy and Helm overrides
+# Apply: kubectl apply -f app-kubernetes-templating.yaml
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubernetes-templating
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: otus-homework
+    app.kubernetes.io/component: kubernetes-templating
+spec:
+  # Project this application belongs to
+  project: otus
+
+  # Application source (Git repository)
+  source:
+    # Repository URL
+    repoURL: 'https://github.com/RurikV/otus-k8s-samoair.git'
+    # Target branch
+    targetRevision: main
+    # Path to Helm chart in repository
+    path: kubernetes-templating/helm-chart/
+
+    # Helm configuration
+    helm:
+      # Release name
+      releaseName: homework-templating
+      # Helm value overrides
+      # This demonstrates parameter customization in ArgoCD
+      valueFiles:
+        - values.yaml
+      # Inline values override - overriding replica count
+      values: |
+        # Override replica count from values.yaml
+        replicaCount: 2
+
+        # Additional overrides can be added here
+        # These take precedence over values.yaml
+
+      # Helm version (v3)
+      version: v3
+
+  # Destination cluster and namespace
+  destination:
+    server: https://kubernetes.default.svc
+    # Different namespace from kubernetes-networks application
+    namespace: HomeworkHelm
+
+  # Sync policy - AUTOMATIC with self-healing and pruning
+  syncPolicy:
+    automated:
+      # Enable automatic sync
+      prune: true        # Remove resources when deleted from Git
+      selfHeal: true    # Correct configuration drift automatically
+      allowEmpty: false # Prevent deleting all resources
+    # Sync options
+    syncOptions:
+      - CreateNamespace=true  # Create namespace if not exists
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - RespectIgnoreDifferences=true
+    # Retry configuration
+    retry:
+      limit: 10  # More retries for auto-sync
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 10m
+
+  # Revision history limit for rollbacks
+  revisionHistoryLimit: 10
+
+  # Ignore differences for certain fields
+  ignoreDifferences:
+    # Allow HPA to modify replicas
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    # Allow service cluster IP changes
+    - group: ''
+      kind: Service
+      jsonPointers:
+        - /spec/clusterIP
+        - /spec/clusterIPs
+    # Allow secret updates
+    - group: ''
+      kind: Secret
+      jsonPointers:
+        - /data
+
+  # Application health checks
+  healthCheck:
+    interval: 15  # More frequent health checks for auto-sync
+    timeout: 60
+
+  # Application info
+  info:
+    - name: 'Description'
+      value: 'Kubernetes Templating Homework - Helm chart with custom templates'
+    - name: 'Author'
+      value: 'Otus Student'
+    - name: 'Sync Policy'
+      value: 'Auto - continuous sync from Git with self-healing'
+    - name: 'Override'
+      value: 'replicaCount: 2'
+
+  # Application dependencies (optional - sync order)
+  # This application can sync independently
+  # dependencies: []
+
+status:
+  # Application status will be populated by ArgoCD
+  health:
+    status: Unknown
+  operationState:
+    phase: Running
+  sync:
+    status: OutOfSync
+  reconciledAt: null

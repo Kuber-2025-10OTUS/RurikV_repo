@@ -1,0 +1,102 @@
+# ArgoCD Project: Otus
+# This project defines boundaries for homework applications
+# Apply: kubectl apply -f argocd-project-otus.yaml
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: otus
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: otus-homework
+spec:
+  # Description of the project
+  description: Otus Kubernetes GitOps Course Homework Project
+
+  # Source repositories allowed for this project
+  # Replace <YOUR_GITHUB_USERNAME> with your actual GitHub username or repository URL
+  sourceRepos:
+    # Allow your homework repository
+    - 'https://github.com/RurikV/otus-k8s-samoair.git'
+    # You can also add your fork/repository URL here
+    # - 'https://github.com/<YOUR_USERNAME>/otus-k8s-samoair.git'
+
+  # Destination clusters and namespaces
+  destinations:
+    # Current cluster (in-cluster)
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+      # Restrict which namespaces this project can deploy to
+      # Only allow namespaces that start with "homework" or "Homework"
+      name: in-cluster
+
+  # Cluster resource whitelist - what cluster-scoped resources can be created
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'rbac.authorization.k8s.io'
+      kind: '*'
+    - group: 'apiextensions.k8s.io'
+      kind: CustomResourceDefinition
+
+  # Namespace resource whitelist - what namespaced resources can be created
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  # Deny specific resource patterns
+  namespaceResourceBlacklist:
+    # Prevent creating resources in system namespaces
+    - group: '*'
+      kind: '*'
+      # Note: This is handled by destination restrictions in destinations
+
+  # Synchronization windows (optional - time-based sync restrictions)
+  syncWindows:
+    # No sync windows - allow sync at any time
+    []
+
+  # Orphaned resources monitoring
+  orphanedResources:
+    # Warn about resources that exist in cluster but not in Git
+    warn: false
+
+  # Roles for this project
+  roles:
+    # Admin role - full access to project resources
+    - name: admin
+      description: Admin access to project
+      policies:
+        - p, proj:otus:admin, *, *, otus/*, allow
+      groups:
+        - argocd-admins
+
+    # Read-only role
+    - name: read-only
+      description: Read-only access to project
+      policies:
+        - p, proj:otus:readonly, applications, get, otus/*, allow
+        - p, proj:otus:readonly, applications, list, otus/*, allow
+      groups: []
+
+  # Signature verification (optional)
+  signatureKeys:
+    # No signature verification for homework
+    []
+
+  # OIDC configuration (optional)
+  oidcConfig: null
+
+status:
+  # Project is active
+  sourceRepos:
+    - 'https://github.com/RurikV/otus-k8s-samoair.git'
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'

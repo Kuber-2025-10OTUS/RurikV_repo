@@ -1,0 +1,96 @@
+# ArgoCD Application: kubernetes-networks
+# This application deploys kubernetes-networks homework with MANUAL sync policy
+# Apply: kubectl apply -f app-kubernetes-networks.yaml
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubernetes-networks
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: otus-homework
+    app.kubernetes.io/component: kubernetes-networks
+spec:
+  # Project this application belongs to
+  project: otus
+
+  # Application source (Git repository)
+  source:
+    # Repository URL
+    repoURL: 'https://github.com/RurikV/otus-k8s-samoair.git'
+    # Target branch
+    targetRevision: main
+    # Path to manifests in repository
+    path: kubernetes-networks/
+    # Kustomize configuration (if using)
+    kustomize:
+      # Add commonLabels to distinguish this deployment
+      commonLabels:
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/instance: kubernetes-networks-homework
+
+  # Destination cluster and namespace
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: homework
+
+  # Sync policy - MANUAL (requires manual sync trigger)
+  syncPolicy:
+    automated:
+      # Disable automatic sync
+      prune: false
+      selfHeal: false
+      allowEmpty: false
+    # Sync options
+    syncOptions:
+      - CreateNamespace=true  # Create namespace if not exists
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    # Retry configuration
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Revision history limit
+  revisionHistoryLimit: 10
+
+  # Ignore differences (optional)
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: ''
+      kind: Service
+      jsonPointers:
+        - /spec/clusterIP
+        - /spec/clusterIPs
+
+  # Application health checks
+  healthCheck:
+    # Number of seconds to wait between health checks
+    interval: 30
+    # Number of retries for health check
+    timeout: 60
+
+  # Application info
+  info:
+    - name: 'Description'
+      value: 'Kubernetes Networks Homework - Network policies and ingress management'
+    - name: 'Author'
+      value: 'Otus Student'
+    - name: 'Sync Policy'
+      value: 'Manual - sync triggered manually via CLI or UI'
+
+status:
+  # Application status will be populated by ArgoCD
+  health:
+    status: Unknown
+  operationState:
+    phase: Running
+  sync:
+    status: OutOfSync
+  reconciledAt: null
