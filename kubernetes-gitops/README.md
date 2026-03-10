@@ -9,6 +9,7 @@ This homework demonstrates GitOps practices using ArgoCD to deploy and manage Ku
 - Helm installed
 - ArgoCD CLI installed
 - Infra nodes configured with `node-role=infra:NoSchedule` taint and label
+- Worker node labeled with `homework=true` (for kubernetes-networks pods)
 
 ### Install ArgoCD CLI
 
@@ -37,7 +38,7 @@ argocd version --short
 RurikV_repo/ (or your fork: RurikV_repo)
 ├── kubernetes-networks/       ← Application source code (kubernetes-networks homework)
 ├── kubernetes-templating/     ← Application source code (kubernetes-templating homework)
-│   └── helm-chart/            ← Helm chart for kubernetes-templating
+│   └── web-server/            ← Helm chart for kubernetes-templating
 └── kubernetes-gitops/         ← This directory (ArgoCD configuration only)
     ├── README.md
     ├── argocd-values.yaml
@@ -68,8 +69,8 @@ RurikV_repo/ (or your fork: RurikV_repo)
 │  - Dest: Cluster                                            │
 ├─────────────────────────────────────────────────────────────┤
 │  Application 2: kubernetes-templating (auto sync)            │
-│  - Source: ../kubernetes-templating/helm-chart/              │
-│  - Namespace: HomeworkHelm                                  │
+│  - Source: ../kubernetes-templating/web-server/              │
+│  - Namespace: homeworkhelm                                  │
 │  - Helm override: replicas=2                                │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -105,27 +106,29 @@ helm upgrade --install argocd argo/argo-cd \
 
 ### 1.4 Configure ArgoCD CLI Access
 
-The ArgoCD CLI needs to connect to the ArgoCD server. Choose one of the following methods:
+The ArgoCD CLI needs to connect to the ArgoCD server. With `server.insecure: true`, use HTTP mode:
 
 **Method 1: Port-forward (recommended for local access)**
 ```bash
-# In one terminal, start port-forward
-kubectl port-forward -n argocd svc/argocd-server 8080:443
+# In one terminal, start port-forward (HTTP port)
+kubectl port-forward -n argocd svc/argocd-server 8080:80
 
 # In another terminal, login to ArgoCD
-argocd login localhost:8080 --username admin --password <initial-password>
-
-# Or get password and login in one command
 argocd login localhost:8080 --username admin --password \
-  $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)
+  $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d) \
+  --plaintext
+
+# Or set environment variable for persistent connection
+export ARGOCD_OPTS="--server localhost:8080 --plaintext"
 ```
 
 **Method 2: LoadBalancer (if external access needed)**
 ```bash
 # Get LoadBalancer IP
 EXTERNAL_IP=$(kubectl get svc argocd-server -n argocd -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-argocd login "$EXTERNAL_IP:443" --username admin --password \
-  $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)
+argocd login "$EXTERNAL_IP:80" --username admin --password \
+  $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d) \
+  --plaintext
 ```
 
 **Verify connection:**
@@ -141,9 +144,9 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath='{.data.password}' | base64 -d && echo
 
 # Port-forward to access ArgoCD UI (if not already running)
-kubectl port-forward -n argocd svc/argocd-server 8080:443
+kubectl port-forward -n argocd svc/argocd-server 8080:80
 
-# Open browser: https://localhost:8080
+# Open browser: http://localhost:8080
 # Username: admin
 # Password: <use password from command above>
 ```
@@ -159,15 +162,21 @@ kubectl apply -f argocd-project-otus.yaml
 
 **Project Configuration:**
 - Name: `otus`
-- Source Repositories: Your homework repository (`https://github.com/samoair/RurikV_repo.git`)
-- Destinations: Current cluster (selected namespaces only)
-- Cluster Resource Whitelist: Limited to specific namespaces
-- Namespace Resource Whitelist: Limited to homework namespaces
+- Source Repositories: `https://github.com/samoair/RurikV_repo.git`
+- Destinations: Current cluster (all namespaces)
+- Cluster Resource Whitelist: Namespace, RBAC, CRDs
+- Namespace Resource Whitelist: All resources allowed
 - Sync Windows: No restrictions
 
 ## Step 3: Deploy kubernetes-networks Application (Manual Sync)
 
 This application deploys the kubernetes-networks homework from the sibling directory.
+
+**Prerequisites:**
+```bash
+# Label worker node for homework deployment (required by kubernetes-networks pods)
+kubectl label node <worker-node-name> homework=true
+```
 
 **Apply Application Manifest:**
 ```bash
@@ -191,8 +200,8 @@ argocd app sync kubernetes-networks
 ```
 
 **Node Placement:**
-- Application pods use `nodeSelector: node-role=worker`
-- This ensures deployment on worker nodes (not infra)
+- Application pods use `nodeAffinity` requiring `homework=true` label
+- This ensures deployment on labeled worker nodes (not infra)
 - Demonstrates workload segregation
 
 ## Step 4: Deploy kubernetes-templating Application (Auto Sync)
@@ -210,19 +219,20 @@ kubectl apply -f app-kubernetes-templating.yaml
 - **Sync Policy:** Auto (continuous sync from Git)
 - **Auto-Prune:** `true` (removes resources when deleted from Git)
 - **Self-Heal:** `true` (corrects drift)
-- **Namespace:** `HomeworkHelm`
-- **Source:** `kubernetes-templating/helm-chart/` directory (sibling to this directory)
-- **Helm Override:** `replicas: 2` (demonstrates value customization)
+- **Namespace:** `homeworkhelm`
+- **Source:** `kubernetes-templating/web-server/` directory (sibling to this directory)
+- **Helm Override:** `replicaCount: 2` (demonstrates value customization)
 
 **Key Features:**
 - Automatic synchronization from Git repository
 - Self-healing: detects and fixes configuration drift
 - Pruning: removes resources deleted from Git
 - Separate namespace demonstrates multi-application management
+- Helm value override demonstrates customization at deploy time
 
 ## Verification
 
-### Check ArgoCD Components on Infra Nodes
+### Check ArgoCD Components
 
 ```bash
 kubectl get pods -n argocd -o wide
@@ -243,9 +253,9 @@ argocd proj get otus
 argocd app list
 
 # Expected output:
-# NAME                      PROJECT  SYNC STATUS  HEALTH
-# kubernetes-networks       otus     OutOfSync   Missing
-# kubernetes-templating    otus     Synced      Healthy
+# NAME                      PROJECT  SYNC STATUS  HEALTH       SYNCPOLICY
+# kubernetes-networks       otus     Synced       Healthy      Manual
+# kubernetes-templating    otus     Synced       Healthy      Auto-Prune
 ```
 
 ### Verify Namespace Separation
@@ -253,7 +263,17 @@ argocd app list
 ```bash
 kubectl get ns
 # homework       - for kubernetes-networks
-# HomeworkHelm   - for kubernetes-templating
+# homeworkhelm   - for kubernetes-templating
+```
+
+### Verify Running Pods
+
+```bash
+kubectl get pods -n homework
+# 3 replicas (from kubernetes-networks deployment)
+
+kubectl get pods -n homeworkhelm
+# 2 replicas (Helm override from kubernetes-templating)
 ```
 
 ### Verify Source Directory References
@@ -261,7 +281,7 @@ kubectl get ns
 ```bash
 # From kubernetes-gitops directory, verify sibling directories exist
 ls -la ../kubernetes-networks
-ls -la ../kubernetes-templating/helm-chart
+ls -la ../kubernetes-templating/web-server
 ```
 
 ## Troubleshooting
@@ -283,16 +303,16 @@ sudo mv argocd /usr/local/bin/argocd
 ### ArgoCD CLI Cannot Connect to Server
 
 ```bash
-# Ensure you're logged in to ArgoCD
-argocd cluster list
+# Ensure port-forward is running (HTTP mode)
+kubectl port-forward -n argocd svc/argocd-server 8080:80
 
-# If error, re-login:
-# With port-forward running:
+# Login with --plaintext flag (server runs in insecure mode)
 argocd login localhost:8080 --username admin --password \
-  $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)
+  $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d) \
+  --plaintext
 
-# Or use ARGOCD_OPTS environment variable:
-export ARGOCD_OPTS="--server localhost:8080 --grpc-web"
+# Or set environment variable
+export ARGOCD_OPTS="--server localhost:8080 --plaintext"
 argocd cluster list
 ```
 
@@ -303,7 +323,20 @@ argocd cluster list
 kubectl get node -l node-role=infra
 
 # Check ArgoCD pod logs
-kubectl logs -n argocd -l app.kubernetes.io/name=argo-cd
+kubectl logs -n argocd -l app.kubernetes.io/part-of=argocd
+```
+
+### kubernetes-networks Pods Pending
+
+```bash
+# Check pod events for scheduling issues
+kubectl describe pod -n homework <pod-name>
+
+# Ensure worker node has homework=true label
+kubectl get nodes --show-labels | grep homework
+
+# If missing, add the label:
+kubectl label node <worker-node-name> homework=true
 ```
 
 ### Application Not Syncing
@@ -323,11 +356,11 @@ argocd app get <app-name> --show-events
 
 ```bash
 # Verify the path exists in your repository
-git ls-remote --heads git@github.com:RurikV/RurikV_repo.git
-
-# Or check locally
 ls -la ../kubernetes-networks
-ls -la ../kubernetes-templating/helm-chart
+ls -la ../kubernetes-templating/web-server
+
+# Check application configuration
+argocd app get <app-name>
 ```
 
 ### Project Access Denied
@@ -352,7 +385,10 @@ helm uninstall argocd -n argocd
 kubectl delete namespace argocd
 
 # Delete application namespaces
-kubectl delete namespace homework HomeworkHelm
+kubectl delete namespace homework homeworkhelm
+
+# Remove homework label from nodes (optional)
+kubectl label nodes <node-name> homework-
 ```
 
 ## Files Structure
@@ -366,11 +402,13 @@ kubernetes-gitops/              (This directory - ArgoCD manifests only)
 └── app-kubernetes-templating.yaml # Application manifest for ../kubernetes-templating
 
 ../kubernetes-networks/          (Sibling directory - application source code)
-├── manifests/
-└── ...
+├── deployment.yaml
+├── service.yaml
+├── ingress.yaml
+└── namespace.yaml
 
 ../kubernetes-templating/        (Sibling directory - application source code)
-└── helm-chart/
+└── web-server/
     ├── Chart.yaml
     ├── values.yaml
     └── templates/
@@ -388,5 +426,6 @@ kubernetes-gitops/              (This directory - ArgoCD manifests only)
   - [ ] Project "otus" details
   - [ ] kubernetes-networks application (manual sync)
   - [ ] kubernetes-templating application (auto-synced)
-  - [ ] Pods in separate namespaces (homework, HomeworkHelm)
+  - [ ] Pods in separate namespaces (homework, homeworkhelm)
   - [ ] Application source showing correct directory paths
+  - [ ] kubernetes-templating showing 2 replicas (Helm override working)

@@ -110,7 +110,7 @@ spec:
     - name: "Override"
       value: "replicaCount: 2"
     - name: "Source Directory"
-      value: "../kubernetes-templating/helm-chart (relative to kubernetes-gitops)"
+      value: "../kubernetes-templating/web-server (relative to kubernetes-gitops)"
 
   # Application dependencies (optional - sync order)
   # This application can sync independently
