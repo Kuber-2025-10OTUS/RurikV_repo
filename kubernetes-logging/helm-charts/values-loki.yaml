@@ -4,50 +4,41 @@
 # helm repo update
 # helm upgrade --install loki grafana/loki -n monitoring -f values-loki.yaml
 
+# Deployment mode - SingleBinary for simple single-node deployment
+deploymentMode: SingleBinary
+
 # Disable authentication for simplicity
 loki:
   auth_enabled: false
 
-  # Schema configuration for S3 storage
-  storage:
-    type: s3
-    # Bucket names MUST be defined at this level (not under s3:)
-    bucketNames:
-      chunks: loki-logs-bucket-otus
-      ruler: loki-logs-bucket-otus
-      admin: loki-logs-bucket-otus
-    s3:
-      # S3 endpoint for Yandex Cloud Object Storage
-      endpoint: https://storage.yandexcloud.net
-      region: ru-central1
-      # Access credentials (should be set via secrets in production)
-      accessKeyId: ${S3_ACCESS_KEY}
-      secretAccessKey: ${S3_SECRET_KEY}
-      s3ForcePathStyle: true
-      insecure: false
+  # Common configuration
+  commonConfig:
+    path_prefix: /var/loki
+    replication_factor: 1
 
-  # Schema config for chunks
+  # Disable ruler to avoid S3 errors
+  ruler:
+    enable: false
+
+  # Schema configuration - use filesystem storage for simplicity
+  storage:
+    type: filesystem
+    filesystem:
+      chunks_directory: /var/loki/chunks
+
+  # Schema config for chunks (simplified for filesystem)
   schemaConfig:
     configs:
       - from: 2024-01-01
         store: tsdb
-        object_store: s3
+        object_store: filesystem
         schema: v13
         index:
           prefix: index_
           period: 24h
 
-  # Memberlist configuration for single node (not needed for backend mode)
-  memberlist:
-    join_members:
-      - loki-backend-0
-
-# Single binary deployment (monolithic mode) - DISABLED
+# Single binary deployment (monolithic mode) - ENABLED
 singleBinary:
-  replicas: 0
-
-# Use backend for monolithic deployment - ENABLED
-backend:
   replicas: 1
 
   # Resource limits
@@ -70,19 +61,20 @@ backend:
       value: "infra"
       effect: "NoSchedule"
 
-# Disable read and write (backend handles both)
-read:
-  replicas: 0
-
-write:
-  replicas: 0
-
-# Gateway configuration (disabled for backend mode)
+# Gateway configuration - DISABLED (singleBinary doesn't use gateway)
 gateway:
   enabled: false
   replicas: 0
 
-# Configure memcached caches to use infra nodes
+# Backend, read, write - DISABLED
+backend:
+  replicas: 0
+read:
+  replicas: 0
+write:
+  replicas: 0
+
+# Configure memcached caches - DISABLED
 chunksCache:
   enabled: false
 
@@ -109,6 +101,8 @@ serviceAccount:
 rbac:
   create: true
 
-# Persistence - DISABLED for S3 storage
+# Persistence - ENABLED for filesystem storage
 persistence:
-  enabled: false
+  enabled: true
+  size: 10Gi
+  storageClassName: yc-network-hdd
