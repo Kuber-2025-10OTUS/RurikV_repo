@@ -1,0 +1,38 @@
+# Copy this file to terraform.tfvars and fill in your values
+# All values can also be set via environment variables (YC_CLOUD_ID, YC_FOLDER_ID, YC_ZONE, YC_TOKEN)
+
+# Yandex Cloud Configuration (or use environment variables)
+# yc_cloud_id  = "your-cloud-id"
+# yc_folder_id = "your-folder-id"
+# yc_zone      = "ru-central1-a"
+# yc_token     = "your-oauth-token"  # Optional, can use YC_TOKEN env var
+
+# Cluster Configuration
+cluster_name = "logging-cluster"
+
+# Network Configuration
+network_name = "logging-network"
+subnet_name  = "logging-subnet"
+subnet_cidr  = "10.96.0.0/24"
+
+# Service Accounts
+k8s_sa_name = "k8s-logging-sa"
+s3_sa_name  = "s3-loki-sa"
+
+# S3 Bucket for Loki
+bucket_name = "loki-logs-bucket-otus"  # Must be globally unique
+
+# Node Configuration
+worker_node_count = 1
+infra_node_count  = 1
+
+worker_node_memory = 8  # GB
+worker_node_cores  = 2  # vCPUs
+
+infra_node_memory = 8  # GB
+infra_node_cores  = 4  # vCPUs
+
+node_disk_size = 64    # GB
+node_disk_type = "network-ssd"
+preemptible    = true
+node_core_fraction = 50  # 5, 20, 50, or 100

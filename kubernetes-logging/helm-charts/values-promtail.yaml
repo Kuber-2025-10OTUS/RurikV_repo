@@ -1,0 +1,60 @@
+# Promtail Helm Chart Values
+# Install command:
+# helm repo add grafana https://grafana.github.io/helm-charts
+# helm repo update
+# helm upgrade --install promtail grafana/promtail -n monitoring -f values-promtail.yaml
+
+# Main configuration
+config:
+  clients:
+    - url: http://loki.monitoring.svc.cluster.local:3100/loki/api/v1/push
+      tenant_id: ""
+
+  # Scrape configurations
+  snippets:
+    # Add additional scrape configs if needed
+    extraScrapeConfigs: ""
+    # Add additional log stream relabel configs
+    extraRelabelConfigs: []
+
+# Run as DaemonSet to collect logs from all nodes
+daemonset:
+  enabled: true
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Tolerations - set at the top level for the Promtail chart
+tolerations:
+  - key: "node-role"
+    operator: "Equal"
+    value: "infra"
+    effect: "NoSchedule"
+  - key: "node-role.kubernetes.io/control-plane"
+    operator: "Exists"
+  - key: "node-role.kubernetes.io/master"
+    operator: "Exists"
+
+# Service account
+serviceAccount:
+  create: true
+  name: promtail
+
+# RBAC
+rbac:
+  create: true
+  createClusterRole: true
+
+# Disable test pods
+test:
+  enabled: false
+
+# Persistence
+persistence:
+  enabled: false

@@ -1,0 +1,108 @@
+# Loki Helm Chart Values - Minimal Configuration for Homework
+# Install command:
+# helm repo add grafana https://grafana.github.io/helm-charts
+# helm repo update
+# helm upgrade --install loki grafana/loki -n monitoring -f values-loki.yaml
+
+# Deployment mode - SingleBinary for simple single-node deployment
+deploymentMode: SingleBinary
+
+# Disable authentication for simplicity
+loki:
+  auth_enabled: false
+
+  # Common configuration
+  commonConfig:
+    path_prefix: /var/loki
+    replication_factor: 1
+
+  # Disable ruler to avoid S3 errors
+  ruler:
+    enable: false
+
+  # Schema configuration - use filesystem storage for simplicity
+  storage:
+    type: filesystem
+    filesystem:
+      chunks_directory: /var/loki/chunks
+
+  # Schema config for chunks (simplified for filesystem)
+  schemaConfig:
+    configs:
+      - from: 2024-01-01
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+
+# Single binary deployment (monolithic mode) - ENABLED
+singleBinary:
+  replicas: 1
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  # Node selection - schedule on infra nodes
+  nodeSelector:
+    node-role: infra
+
+  # Tolerations for infra nodes
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+
+# Gateway configuration - DISABLED (singleBinary doesn't use gateway)
+gateway:
+  enabled: false
+  replicas: 0
+
+# Backend, read, write - DISABLED
+backend:
+  replicas: 0
+read:
+  replicas: 0
+write:
+  replicas: 0
+
+# Configure memcached caches - DISABLED
+chunksCache:
+  enabled: false
+
+resultsCache:
+  enabled: false
+
+# Disable test pods
+test:
+  enabled: false
+
+# Monitoring configuration
+monitoring:
+  selfMonitoring:
+    enabled: false
+  lokiCanary:
+    enabled: false
+
+# Service account
+serviceAccount:
+  create: true
+  name: loki
+
+# RBAC
+rbac:
+  create: true
+
+# Persistence - ENABLED for filesystem storage
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClassName: yc-network-hdd

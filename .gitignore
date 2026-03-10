@@ -1,1 +1,5 @@
-.idea/
+.env/
+.terraform/
+kubernetes-logging/terraform/terraform.tfvars
+kubernetes-logging/terraform/terraform.tfstate**
+kubernetes-logging/terraform/.terraform**
