@@ -1,0 +1,79 @@
+# ArgoCD Application: kubernetes-networks
+# This application deploys kubernetes-networks homework with MANUAL sync policy
+# Apply: kubectl apply -f app-kubernetes-networks.yaml
+#
+# Directory structure (all in same repo):
+# RurikV_repo/
+# ├── kubernetes-networks/     <-- Source directory for this app
+# ├── kubernetes-templating/
+# └── kubernetes-gitops/       <-- This directory
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubernetes-networks
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: otus-homework
+    app.kubernetes.io/component: kubernetes-networks
+spec:
+  # Project this application belongs to
+  project: otus
+
+  # Application source (Git repository)
+  source:
+    # Repository URL
+    repoURL: "https://github.com/samoair/RurikV_repo.git"
+    # Target branch
+    targetRevision: main
+    # Path to manifests in repository
+    # This references ../kubernetes-networks directory in the repo
+    path: kubernetes-networks/
+    # Directory contains plain YAML manifests (no Kustomize)
+
+  # Destination cluster and namespace
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: homework
+
+  # Sync policy - MANUAL (requires manual sync trigger)
+  # Note: No 'automated' section means manual sync
+  syncPolicy:
+    # Sync options
+    syncOptions:
+      - CreateNamespace=true # Create namespace if not exists
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    # Retry configuration
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Revision history limit
+  revisionHistoryLimit: 10
+
+  # Ignore differences (optional)
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: ""
+      kind: Service
+      jsonPointers:
+        - /spec/clusterIP
+        - /spec/clusterIPs
+
+  # Application info
+  info:
+    - name: "Description"
+      value: "Kubernetes Networks Homework - Network policies and ingress management"
+    - name: "Author"
+      value: "Otus Student"
+    - name: "Sync Policy"
+      value: "Manual - sync triggered manually via CLI or UI"
+    - name: "Source Directory"
+      value: "../kubernetes-networks (relative to kubernetes-gitops)"

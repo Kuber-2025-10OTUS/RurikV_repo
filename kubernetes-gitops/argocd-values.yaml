@@ -1,0 +1,169 @@
+# ArgoCD Helm Chart Values
+# Install: helm upgrade --install argocd argo/argo-cd -n argocd -f argocd-values.yaml
+
+# Global configuration for all ArgoCD components
+global:
+  image:
+    tag: v2.12.6
+
+# Install ArgoCD CRDs
+installCRDs: true
+
+# ArgoCD configuration
+configs:
+  # Cluster credentials are auto-discovered for in-cluster
+  # No manual clusterCredentials configuration needed
+  cm:
+    # Application instance label key
+    application.instanceLabelKey: argocd.argoproj.io/instance
+
+  # Params configuration - use correct structure for Helm chart
+  params:
+    # Server properties
+    server.insecure: "true"
+    server.disable.auth: "false"
+
+# ArgoCD API Server
+server:
+  enabled: true
+  replicas: 1
+
+  # Service configuration
+  service:
+    type: LoadBalancer
+    ports:
+      - name: http
+        protocol: TCP
+        port: 80
+        targetPort: 8080
+      - name: https
+        protocol: TCP
+        port: 443
+        targetPort: 8080
+
+  # Ingress (optional - uncomment if using ingress)
+  ingress:
+    enabled: false
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  # Node selection - schedule on INFRA nodes only
+  nodeSelector:
+    node-role: infra
+
+  # Tolerations for infra nodes
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+
+  # Additional labels for pod scheduling
+  podLabels:
+    app.kubernetes.io/scheduling: infra-only
+
+# Repo Server - manages Git repository connections
+repoServer:
+  enabled: true
+  replicas: 1
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 300m
+      memory: 512Mi
+    requests:
+      cpu: 150m
+      memory: 256Mi
+
+  # Node selection - schedule on INFRA nodes only
+  nodeSelector:
+    node-role: infra
+
+  # Tolerations for infra nodes
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+
+# Application Controller - watches applications and syncs state
+applicationSet:
+  enabled: false
+
+controller:
+  enabled: true
+  replicas: 1
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+  # Node selection - schedule on INFRA nodes only
+  nodeSelector:
+    node-role: infra
+
+  # Tolerations for infra nodes
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+
+  # Number of application sync threads
+  parallelismLimit: 10
+
+# Redis - caching for ArgoCD
+redis:
+  enabled: true
+  # Use standalone Redis deployment
+  ha:
+    enabled: false
+
+  # Node selection - schedule on INFRA nodes only
+  nodeSelector:
+    node-role: infra
+
+  # Tolerations for infra nodes
+  tolerations:
+    - key: "node-role"
+      operator: "Equal"
+      value: "infra"
+      effect: "NoSchedule"
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Notification Controller - sends notifications for sync events
+notifications:
+  enabled: false
+
+# Disable bundled Dex
+dex:
+  enabled: false
+
+# Metrics configuration
+metrics:
+  enabled: false
+
+# Disable built-in service monitors
+serviceMonitor:
+  enabled: false
